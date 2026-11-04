@@ -15,12 +15,17 @@ train = [
   "onnx>=1.19",
   "onnxscript>=0.5",
 ]
+quantize = [
+  "onnx>=1.19",
+  "onnxruntime>=1.23",
+]
 
 [project.scripts]
 prepare = "tagger.prepare:main"
 train = "tagger.train:main"
 export = "tagger.export:main"
 prepare-learner = "tagger.learner:main"
+quantize = "tagger.quantize:main"
 
 [build-system]
 requires = ["uv_build>=0.13,<0.14"]
