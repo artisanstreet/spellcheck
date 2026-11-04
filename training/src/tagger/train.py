@@ -113,7 +113,7 @@ def save(model: Tagger, tokenizer: PreTrainedTokenizerFast, vocabulary: Vocabula
     path.mkdir(parents=True, exist_ok=True)
     torch.save(model.state_dict(), path / "tagger.pt")
     tokenizer.save_pretrained(path)
-    (path / "labels.txt").write_text("".join(f"{label}\n" for label in vocabulary.labels), encoding="utf-8")
+    (path / "labels.txt").write_text("".join(f"{label}\n" for label in vocabulary.labels), encoding="utf-8", newline="\n")
     (path / "tagger.json").write_text(json.dumps({"base": base, "labels": len(vocabulary.labels)}), encoding="utf-8")
 
 
@@ -122,6 +122,7 @@ def main() -> None:
     parser.add_argument("--data", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--base", default="jhu-clsp/ettin-encoder-32m")
+    parser.add_argument("--init", type=Path, default=None)
     parser.add_argument("--labels", type=int, default=5000)
     parser.add_argument("--batch-size", type=int, default=64)
     parser.add_argument("--max-tokens", type=int, default=160)
@@ -136,7 +137,11 @@ def main() -> None:
     torch.manual_seed(0)
     torch.backends.cuda.enable_mem_efficient_sdp(False)
     device = torch.device("cuda")
-    vocabulary = top_labels(read_counts(arguments.data / "labels.tsv"), arguments.labels)
+    vocabulary = (
+        Vocabulary(tuple((arguments.init / "labels.txt").read_text(encoding="utf-8").splitlines()))
+        if arguments.init
+        else top_labels(read_counts(arguments.data / "labels.tsv"), arguments.labels)
+    )
     tokenizer = AutoTokenizer.from_pretrained(arguments.base, add_prefix_space=True)
     collate = Collate(tokenizer, vocabulary, arguments.max_tokens)
     train = DataLoader(
@@ -151,7 +156,10 @@ def main() -> None:
     )
     dev = DataLoader(Examples(arguments.data / "dev.parquet"), batch_size=128, collate_fn=collate, num_workers=2)
 
-    model = Tagger(AutoModel.from_pretrained(arguments.base), len(vocabulary.labels)).to(device)
+    model = Tagger(AutoModel.from_pretrained(arguments.base), len(vocabulary.labels))
+    if arguments.init:
+        model.load_state_dict(torch.load(arguments.init / "tagger.pt", map_location="cpu"))
+    model = model.to(device)
     total = arguments.max_steps or math.ceil(arguments.epochs * len(train))
     optimizer = torch.optim.AdamW(model.parameters(), lr=arguments.learning_rate, weight_decay=0.01, fused=True)
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lambda step: schedule(step, arguments.warmup, total))

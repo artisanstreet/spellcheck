@@ -20,6 +20,7 @@ train = [
 prepare = "tagger.prepare:main"
 train = "tagger.train:main"
 export = "tagger.export:main"
+prepare-learner = "tagger.learner:main"
 
 [build-system]
 requires = ["uv_build>=0.13,<0.14"]
