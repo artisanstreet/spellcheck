@@ -1,0 +1,14 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--frame);
+  color: var(--text);
+  font-family: "Spline Sans", system-ui, sans-serif;
+}

@@ -4,28 +4,36 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build": "node src/build/build.ts",
     "eval": "node src/evaluation/main.ts",
-    "typecheck": "tsrs --noEmit -p tsconfig.json",
-    "test": "vp test"
+    "typecheck": "svelte-kit sync && tsrs --noEmit",
+    "test": "vp test run"
   },
   "engines": {
     "node": "^24.11.0"
   },
   "dependencies": {
+    "@artisanstreet/ui": "github:artisanstreet/web#path:/packages/ui",
     "@huggingface/tokenizers": "0.2.0",
+    "@sveltejs/kit": "3.1.0",
     "dictionary-en": "4.0.0",
     "dictionary-en-gb": "3.0.0",
     "diff": "9.0.0",
     "effect": "4.0.6",
     "harper.js": "3.0.0",
     "nspell": "2.1.5",
-    "onnxruntime-node": "1.31.1"
+    "onnxruntime-node": "1.31.1",
+    "svelte": "5.57.2",
+    "svelte-effect-runtime": "5.0.1"
   },
   "devDependencies": {
+    "@sveltejs/adapter-static": "4.0.1",
+    "@sveltejs/vite-plugin-svelte": "7.3.1",
+    "@types/chrome": "0.3.7",
     "@types/node": "26.6.5",
     "@types/nspell": "2.1.6",
     "tsrs": "0.20.0-ts7.1.0-beta",
-    "typescript": "7.1.0-beta",
+    "typescript": "6.0.3",
     "vite": "npm:@voidzero-dev/vite-plus-core@1.4.0",
     "vite-plus": "1.4.0",
     "vitest": "5.0.5"
