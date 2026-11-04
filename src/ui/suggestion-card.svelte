@@ -76,7 +76,7 @@
 
   .thumb {
     margin: 0 calc(-1 * var(--sp-1));
-    color: var(--glass-ink-dim);
+    color: var(--ink-faint);
     width: 1rem;
     height: 1rem;
     fill: none;
@@ -84,5 +84,10 @@
     stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
+    transition: color var(--duration-micro) var(--ease-smooth-out);
+  }
+
+  :global(.button:hover) > .thumb {
+    color: var(--ink-dim);
   }
 </style>
