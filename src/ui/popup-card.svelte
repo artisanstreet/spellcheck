@@ -7,7 +7,7 @@
 </script>
 
 <main>
-  <Card radius="var(--outer-radius)">
+  <Card radius="0">
     <div class="stack">
       <header>
         <span class="wordmark" role="img" aria-label="Artisan"></span>
@@ -28,12 +28,10 @@
 <style>
   main {
     --inset: var(--sp-2);
-    --outer-radius: calc(var(--radius-md) + var(--inset));
     --inner-radius: var(--radius-md);
     --field-radius: var(--radius-sm);
     display: flex;
     width: 25rem;
-    padding: var(--sp-2);
   }
 
   .stack {

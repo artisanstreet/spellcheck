@@ -22,12 +22,20 @@ const open_options = Effect.tryPromise({
   catch: (cause) => new BrowserError({ cause }),
 });
 
+export type Accelerator = "GPU" | "CPU";
+
+const accelerator: Effect.Effect<Accelerator> = Effect.tryPromise(() => navigator.gpu.requestAdapter()).pipe(
+  Effect.map((adapter): Accelerator => (adapter === null ? "CPU" : "GPU")),
+  Effect.orElseSucceed((): Accelerator => "CPU"),
+);
+
 export class Browser extends Context.Service<
   Browser,
   {
     readonly current_site: Effect.Effect<Option.Option<string>, BrowserError>;
     readonly open_options: Effect.Effect<void, BrowserError>;
+    readonly accelerator: Effect.Effect<Accelerator>;
   }
 >()("spellcheck/Browser") {
-  static readonly layer = Layer.succeed(Browser)({ current_site, open_options });
+  static readonly layer = Layer.succeed(Browser)({ current_site, open_options, accelerator });
 }
