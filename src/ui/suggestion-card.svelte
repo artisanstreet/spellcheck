@@ -13,7 +13,7 @@
   <p class="message">{issue.message}</p>
   <div class="actions">
     {#each issue.replacements as replacement, index (replacement)}
-      <Button tone={index === 0 ? "sand" : "secondary"} onclick={() => accept(replacement)}>{replacement}</Button>
+      <Button tone={index === 0 ? "sand" : "secondary"} onclick={() => accept(replacement)}>{replacement === "" ? "Remove" : replacement}</Button>
     {/each}
     <Button aria-label="Wrong suggestion, hide it" title="Wrong suggestion" onclick={dismiss}>
       <svg class="thumb" viewBox="0 0 24 24" aria-hidden="true">
