@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Issue, Kind } from "../suggestions/issue.ts";
+  import Button from "./button.svelte";
 
   let { issue, accept, dismiss }: { issue: Issue; accept: (replacement: string) => void; dismiss: () => void } = $props();
 
@@ -12,18 +13,16 @@
   <p class="message">{issue.message}</p>
   <div class="actions">
     {#each issue.replacements as replacement, index (replacement)}
-      <button type="button" class="action" class:primary={index === 0} onclick={() => accept(replacement)}>
-        {replacement}
-      </button>
+      <Button tone={index === 0 ? "sand" : "secondary"} onclick={() => accept(replacement)}>{replacement}</Button>
     {/each}
-    <button type="button" class="action dismiss" aria-label="Wrong suggestion, hide it" title="Wrong suggestion" onclick={dismiss}>
-      <svg viewBox="0 0 24 24" aria-hidden="true">
+    <Button aria-label="Wrong suggestion, hide it" title="Wrong suggestion" onclick={dismiss}>
+      <svg class="thumb" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M17 14V2" />
         <path
           d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"
         />
       </svg>
-    </button>
+    </Button>
   </div>
 </div>
 
@@ -75,50 +74,8 @@
     gap: var(--sp-2);
   }
 
-  .action {
-    min-height: 2rem;
-    padding: 0 var(--sp-3);
-    font: inherit;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--ink);
-    background: var(--hover-fill);
-    border: 1px solid var(--hover-edge);
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: filter var(--duration-micro) var(--ease-smooth-out);
-  }
-
-  .action.primary {
-    --sand-top: oklch(0.92 0.035 88);
-    --sand-bottom: oklch(0.82 0.05 78);
-    color: oklch(0.27 0.025 70);
-    background: linear-gradient(var(--sand-top), color-mix(in oklch, var(--sand-top), var(--sand-bottom)), var(--sand-bottom));
-    border-color: transparent;
-    box-shadow: inset 0 1px 0 color-mix(in oklch, var(--sand-top), oklch(1 0 0) 30%), var(--shadow-press);
-  }
-
-  .action:hover {
-    filter: brightness(1.08);
-  }
-
-  .action:active {
-    filter: brightness(0.94);
-  }
-
-  .dismiss {
-    display: grid;
-    place-items: center;
-    width: 2rem;
-    padding: 0;
-    color: var(--glass-ink-dim);
-  }
-
-  .dismiss:hover {
-    color: var(--ink);
-  }
-
-  .dismiss svg {
+  .thumb {
+    margin: 0 calc(-1 * var(--sp-1));
     width: 1rem;
     height: 1rem;
     fill: none;
