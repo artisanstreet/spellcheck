@@ -74,6 +74,6 @@
   .text {
     font-size: 0.75rem;
     line-height: 1.125rem;
-    color: var(--ink);
+    color: var(--glass-ink-dim);
   }
 </style>
