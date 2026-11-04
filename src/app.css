@@ -8,7 +8,22 @@
   --duration-fast: 250ms;
   --ease-smooth-out: cubic-bezier(0.22, 1, 0.36, 1);
   --glass-ink-dim: oklch(0.82 0.012 80);
+  --mark-spelling: oklch(0.704 0.191 22.216);
+  --mark-grammar: oklch(0.83 0.16 82);
+  --mark-clear: oklch(0.74 0.15 152);
+  --mark-on-spelling: oklch(0.2 0.04 25);
+  --mark-spelling-on-glass: oklch(0.74 0.17 22);
+  --mark-grammar-on-glass: oklch(0.85 0.15 84);
+  --glass-alpha: 0.8;
   color-scheme: dark;
+}
+
+[data-surface="light"] {
+  --mark-spelling: oklch(0.577 0.245 27.325);
+  --mark-grammar: oklch(0.66 0.155 60);
+  --mark-clear: oklch(0.62 0.16 152);
+  --mark-on-spelling: oklch(1 0 0);
+  --glass-alpha: 0.94;
 }
 
 html,

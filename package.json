@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev": "vp dev",
     "build": "node src/build/build.ts",
     "eval": "node src/evaluation/main.ts",
     "typecheck": "svelte-kit sync && tsrs --noEmit",
