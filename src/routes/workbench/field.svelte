@@ -98,6 +98,11 @@
     border: 1px solid oklch(0.34 0.008 260);
   }
 
+  .text,
+  .text :global(*) {
+    letter-spacing: normal;
+  }
+
   .text {
     white-space: pre-wrap;
   }

@@ -75,7 +75,6 @@ Sam`;
     margin: 0;
     font-size: 1.125rem;
     font-weight: 600;
-    letter-spacing: -0.01em;
   }
 
   .reset {
@@ -117,7 +116,6 @@ Sam`;
     margin: 0;
     font-size: 0.75rem;
     font-weight: 600;
-    letter-spacing: 0.02em;
   }
 
   .page[data-surface="light"] h2 {

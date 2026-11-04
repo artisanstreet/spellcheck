@@ -57,7 +57,6 @@
     font-size: 0.75rem;
     font-weight: 600;
     line-height: 1rem;
-    letter-spacing: 0.01em;
     color: var(--mark-ink);
   }
 
