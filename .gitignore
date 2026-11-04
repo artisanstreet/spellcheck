@@ -3,3 +3,6 @@ data/
 results/
 .svelte-kit/
 dist/
+.venv/
+__pycache__/
+.pytest_cache/

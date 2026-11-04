@@ -1,0 +1,21 @@
+[project]
+name = "tagger"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "pyarrow>=22",
+  "regex>=2026.1.1",
+]
+
+[dependency-groups]
+dev = ["pytest>=9"]
+
+[project.scripts]
+prepare = "tagger.prepare:main"
+
+[build-system]
+requires = ["uv_build>=0.13,<0.14"]
+build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
