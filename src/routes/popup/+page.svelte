@@ -75,11 +75,11 @@
       {#if accelerator === "GPU"}
         <Hint label="GPU">
           {#snippet title()}Spellcheck is graphics accelerated{/snippet}
-          The graphics processing unit (GPU) on your device is accelerating computation for spellcheck. You're doing great!
+          The GPU on your device is accelerating computation for spellcheck. You're doing great!
         </Hint>{:else}
         <Hint label="CPU">
           {#snippet title()}Spellcheck is <span class="not">not</span> graphics accelerated{/snippet}
-          Your browser isn't letting spellcheck use the graphics processing unit (GPU) on your device, so the central processing unit (CPU) does the
+          Your browser isn't letting spellcheck use the GPU on your device, so the CPU does the
           computation instead. Everything still works, it's just slower and uses more battery. Updating your browser often turns
           acceleration on.
         </Hint>{/if}. The extension is free and licensed under BSD-3. You can find its repository
