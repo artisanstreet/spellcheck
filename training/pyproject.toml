@@ -9,9 +9,14 @@ dependencies = [
 
 [dependency-groups]
 dev = ["pytest>=9"]
+train = [
+  "torch[device-gfx1201]==2.12.0+rocm7.14.1 ; sys_platform == 'win32'",
+  "transformers>=5",
+]
 
 [project.scripts]
 prepare = "tagger.prepare:main"
+train = "tagger.train:main"
 
 [build-system]
 requires = ["uv_build>=0.13,<0.14"]
@@ -19,3 +24,15 @@ build-backend = "uv_build"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.uv]
+default-groups = ["dev"]
+override-dependencies = ["triton ; sys_platform == 'linux'"]
+
+[[tool.uv.index]]
+name = "rocm"
+url = "https://repo.amd.com/rocm/whl-multi-arch/"
+ignore-error-codes = [403]
+
+[tool.uv.sources]
+torch = { index = "rocm", marker = "sys_platform == 'win32'" }
