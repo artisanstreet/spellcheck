@@ -2,9 +2,11 @@ import { Tokenizer } from "@huggingface/tokenizers";
 import { Data, Effect, Match, Schema } from "effect";
 import * as ort from "onnxruntime-web/webgpu";
 import type { Pickiness } from "../../settings/settings.ts";
-import { issues_of } from "../../suggestions/from-tagger.ts";
+import { Gate, check_text } from "../../checking/check.ts";
+import { Source, dictionary_of } from "../../dictionary/dictionary.ts";
+import { checked_issues } from "../../suggestions/from-checked.ts";
 import { Thresholds } from "../../tagger/labels.ts";
-import { Probabilities, tag_text, vocabulary_of } from "../../tagger/tagger.ts";
+import { Probabilities, vocabulary_of } from "../../tagger/tagger.ts";
 import { Infer, to_wire, type Checked } from "../messages.ts";
 
 class ModelError extends Data.TaggedError("ModelError")<{ readonly cause: unknown }> {}
@@ -14,7 +16,7 @@ ort.env.wasm.numThreads = 1;
 
 const fetch_from = (path: string) =>
   Effect.tryPromise({
-    try: () => fetch(chrome.runtime.getURL(`model/${path}`)),
+    try: () => fetch(chrome.runtime.getURL(path)),
     catch: (cause) => new ModelError({ cause }),
   });
 
@@ -41,15 +43,24 @@ const create_session = (model: ArrayBuffer) =>
 
 const load = Effect.gen(function* () {
   const [model, tokenizer_json, tokenizer_config, labels] = yield* Effect.all(
-    [as_bytes("model.onnx"), as_text("tokenizer.json"), as_text("tokenizer_config.json"), as_text("labels.txt")],
+    [as_bytes("model/model.onnx"), as_text("model/tokenizer.json"), as_text("model/tokenizer_config.json"), as_text("model/labels.txt")],
     { concurrency: "unbounded" },
   );
+  const sources = yield* Effect.forEach(
+    ["en-us", "en-gb"],
+    (name) =>
+      Effect.all([as_text(`dictionary/${name}.aff`), as_text(`dictionary/${name}.dic`)]).pipe(
+        Effect.map(([aff, dic]) => new Source({ aff, dic })),
+      ),
+    { concurrency: "unbounded" },
+  );
+  const dictionary = yield* dictionary_of(sources).pipe(Effect.mapError((error) => new ModelError({ cause: error.cause })));
   const session = yield* create_session(model);
   const tokenizer = yield* Effect.try({
     try: () => new Tokenizer(JSON.parse(tokenizer_json), JSON.parse(tokenizer_config)),
     catch: (cause) => new ModelError({ cause }),
   });
-  return { session, vocabulary: vocabulary_of(tokenizer, labels) };
+  return { session, dictionary, vocabulary: vocabulary_of(tokenizer, labels) };
 });
 
 const ids_tensor = (ids: ReadonlyArray<number>) => new ort.Tensor("int64", BigInt64Array.from(ids, BigInt), [1, ids.length]);
@@ -62,9 +73,11 @@ const thresholds_for = (pickiness: Pickiness): Thresholds =>
     Match.exhaustive,
   );
 
+const spelling_gate = new Gate({ margin: 0.1 });
+
 const check = (loaded: Effect.Effect<Effect.Success<typeof load>, ModelError>, request: typeof Infer.Type) =>
   Effect.gen(function* () {
-    const { session, vocabulary } = yield* loaded;
+    const { session, dictionary, vocabulary } = yield* loaded;
     const run = (ids: ReadonlyArray<number>) =>
       Effect.tryPromise({
         try: () => session.run({ input_ids: ids_tensor(ids), attention_mask: ids_tensor(ids.map(() => 1)) }),
@@ -81,8 +94,8 @@ const check = (loaded: Effect.Effect<Effect.Success<typeof load>, ModelError>, r
           }),
         ),
       );
-    const tagged = yield* tag_text(vocabulary, run, thresholds_for(request.pickiness), request.text);
-    return { issues: issues_of(request.text, tagged).map(to_wire) } satisfies Checked;
+    const checked = yield* check_text(dictionary, vocabulary, run, thresholds_for(request.pickiness), spelling_gate, request.text);
+    return { issues: checked_issues(request.text, checked).map(to_wire) } satisfies Checked;
   });
 
 const serve = Effect.gen(function* () {

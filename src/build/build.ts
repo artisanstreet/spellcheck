@@ -81,6 +81,22 @@ const copy_model = (directory: string) =>
     yield* Effect.forEach(model_files, (file) => step(`copy ${file}`, () => cp(resolve(directory, file), join(output, "model", file))));
   });
 
+const dictionaries = [
+  { name: "en-us", package: "dictionary-en" },
+  { name: "en-gb", package: "dictionary-en-gb" },
+];
+
+const copy_dictionaries = Effect.gen(function* () {
+  yield* step("dictionary folder", () => mkdir(join(output, "dictionary"), { recursive: true }));
+  yield* Effect.forEach(dictionaries, (dictionary) =>
+    Effect.forEach(["aff", "dic"], (extension) =>
+      step(`copy ${dictionary.name}.${extension}`, () =>
+        cp(resolve("node_modules", dictionary.package, `index.${extension}`), join(output, "dictionary", `${dictionary.name}.${extension}`)),
+      ),
+    ),
+  );
+});
+
 const main = Effect.gen(function* () {
   yield* build_pages;
   yield* externalize_page_scripts;
@@ -88,6 +104,7 @@ const main = Effect.gen(function* () {
   yield* build_module("background", "src/extension/background/background.ts");
   yield* build_module("offscreen", "src/extension/offscreen/offscreen.ts");
   yield* copy_runtime;
+  yield* copy_dictionaries;
   yield* copy_model(process.env["SPELLCHECK_MODEL"] ?? "models/tagger");
 });
 

@@ -111,10 +111,13 @@ const start_issue = (first: Token, verdict: Verdict): Option.Option<Issue> =>
 
 const overlaps = (left: Issue, right: Issue) => left.start < right.end && right.start < left.end;
 
+export const without_overlaps = (issues: ReadonlyArray<Issue>): ReadonlyArray<Issue> =>
+  issues.reduce<ReadonlyArray<Issue>>((kept, issue) => (kept.some((other) => overlaps(other, issue)) ? kept : [...kept, issue]), []);
+
 export const issues_of = (text: string, tagged: ReadonlyArray<Tagged>): ReadonlyArray<Issue> =>
-  tagged
-    .flatMap((sentence) => [
+  without_overlaps(
+    tagged.flatMap((sentence) => [
       ...Option.toArray(sentence.tokens[0] === undefined ? Option.none() : start_issue(sentence.tokens[0], sentence.start)),
       ...sentence.tokens.flatMap((token, index) => Option.toArray(word_issue(text, token, sentence.verdicts[index] ?? Verdict.Fine()))),
-    ])
-    .reduce<ReadonlyArray<Issue>>((kept, issue) => (kept.some((other) => overlaps(other, issue)) ? kept : [...kept, issue]), []);
+    ]),
+  );
