@@ -8,7 +8,17 @@
 </script>
 
 <div class="card" role="dialog" aria-label="{title} suggestion" data-tone={tone}>
-  <div class="kind"><span class="dot"></span>{title}</div>
+  <div class="header">
+    <div class="kind"><span class="dot"></span>{title}</div>
+    <button type="button" class="dismiss" aria-label="Wrong suggestion, hide it" title="Wrong suggestion" onclick={dismiss}>
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M17 14V2" />
+        <path
+          d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"
+        />
+      </svg>
+    </button>
+  </div>
   <p class="message">{issue.message}</p>
   {#if issue.replacements.length > 0}
     <div class="replacements">
@@ -19,9 +29,6 @@
       {/each}
     </div>
   {/if}
-  <div class="footer">
-    <button type="button" class="ignore" onclick={dismiss}>Ignore</button>
-  </div>
 </div>
 
 <style>
@@ -113,26 +120,37 @@
     filter: brightness(0.94);
   }
 
-  .footer {
+  .header {
     display: flex;
-    padding-top: var(--sp-2);
-    border-top: 1px solid var(--rule-shade);
-    box-shadow: 0 -1px 0 var(--rule-light);
-    margin-top: var(--sp-1);
+    align-items: center;
+    justify-content: space-between;
   }
 
-  .ignore {
+  .dismiss {
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    margin: -0.375rem -0.375rem -0.375rem 0;
     padding: 0;
-    font: inherit;
-    font-size: 0.75rem;
-    font-weight: 500;
     color: var(--glass-ink-dim);
     background: none;
     border: 0;
     cursor: pointer;
+    transition: color var(--duration-micro) var(--ease-smooth-out);
   }
 
-  .ignore:hover {
+  .dismiss:hover {
     color: var(--ink);
+  }
+
+  .dismiss svg {
+    width: 1rem;
+    height: 1rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 </style>
