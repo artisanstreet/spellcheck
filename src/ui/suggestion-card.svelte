@@ -8,9 +8,15 @@
 </script>
 
 <div class="card" role="dialog" aria-label="{title} suggestion" data-tone={tone}>
-  <div class="header">
-    <div class="kind"><span class="dot"></span>{title}</div>
-    <button type="button" class="dismiss" aria-label="Wrong suggestion, hide it" title="Wrong suggestion" onclick={dismiss}>
+  <div class="kind">{title}</div>
+  <p class="message">{issue.message}</p>
+  <div class="actions">
+    {#each issue.replacements as replacement, index (replacement)}
+      <button type="button" class="action" class:primary={index === 0} onclick={() => accept(replacement)}>
+        {replacement}
+      </button>
+    {/each}
+    <button type="button" class="action dismiss" aria-label="Wrong suggestion, hide it" title="Wrong suggestion" onclick={dismiss}>
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M17 14V2" />
         <path
@@ -19,16 +25,6 @@
       </svg>
     </button>
   </div>
-  <p class="message">{issue.message}</p>
-  {#if issue.replacements.length > 0}
-    <div class="replacements">
-      {#each issue.replacements as replacement, index (replacement)}
-        <button type="button" class="replacement" class:primary={index === 0} onclick={() => accept(replacement)}>
-          {replacement}
-        </button>
-      {/each}
-    </div>
-  {/if}
 </div>
 
 <style>
@@ -59,21 +55,11 @@
   }
 
   .kind {
-    display: flex;
-    align-items: center;
-    gap: var(--sp-2);
     font-size: 0.75rem;
     font-weight: 600;
     line-height: 1rem;
     letter-spacing: 0.01em;
     color: var(--mark-ink);
-  }
-
-  .dot {
-    width: 0.5rem;
-    height: 0.5rem;
-    border-radius: 50%;
-    background: var(--mark-ink);
   }
 
   .message {
@@ -83,13 +69,13 @@
     color: var(--glass-ink-dim);
   }
 
-  .replacements {
+  .actions {
     display: flex;
     flex-wrap: wrap;
     gap: var(--sp-2);
   }
 
-  .replacement {
+  .action {
     min-height: 2rem;
     padding: 0 var(--sp-3);
     font: inherit;
@@ -103,7 +89,7 @@
     transition: filter var(--duration-micro) var(--ease-smooth-out);
   }
 
-  .replacement.primary {
+  .action.primary {
     --sand-top: oklch(0.92 0.035 88);
     --sand-bottom: oklch(0.82 0.05 78);
     color: oklch(0.27 0.025 70);
@@ -112,32 +98,20 @@
     box-shadow: inset 0 1px 0 color-mix(in oklch, var(--sand-top), oklch(1 0 0) 30%), var(--shadow-press);
   }
 
-  .replacement:hover {
+  .action:hover {
     filter: brightness(1.08);
   }
 
-  .replacement:active {
+  .action:active {
     filter: brightness(0.94);
-  }
-
-  .header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
   }
 
   .dismiss {
     display: grid;
     place-items: center;
-    width: 1.75rem;
-    height: 1.75rem;
-    margin: -0.375rem -0.375rem -0.375rem 0;
+    width: 2rem;
     padding: 0;
     color: var(--glass-ink-dim);
-    background: none;
-    border: 0;
-    cursor: pointer;
-    transition: color var(--duration-micro) var(--ease-smooth-out);
   }
 
   .dismiss:hover {
