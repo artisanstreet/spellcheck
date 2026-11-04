@@ -4,7 +4,8 @@
   "version": "0.1.0",
   "description": "Context-aware spelling and grammar checking that runs entirely on your device.",
   "permissions": [
-    "storage"
+    "storage",
+    "offscreen"
   ],
   "action": {
     "default_popup": "index.html#/popup",
@@ -29,5 +30,9 @@
   ],
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
   }
 }
