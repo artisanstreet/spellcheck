@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { canonicalize_all, correction_key } from "../../src/edits/canonical.ts";
-import { Correction, Edit, replace } from "../../src/edits/edit.ts";
+import { canonicalize_all, correction_key } from "../../../src/evaluation/edits/canonical.ts";
+import { Correction, Edit, replace } from "../../../src/evaluation/edits/edit.ts";
 
 const keys = (text: string, edits: ReadonlyArray<Edit>) => canonicalize_all(text, edits).map(correction_key);
 

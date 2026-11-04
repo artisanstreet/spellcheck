@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { canonicalize_all } from "../../src/edits/canonical.ts";
-import { Correction, Edit, replace } from "../../src/edits/edit.ts";
-import { compare, compare_best, Counts, metrics } from "../../src/scoring/score.ts";
+import { canonicalize_all } from "../../../src/evaluation/edits/canonical.ts";
+import { Correction, Edit, replace } from "../../../src/evaluation/edits/edit.ts";
+import { compare, compare_best, Counts, metrics } from "../../../src/evaluation/scoring/score.ts";
 
 const text = "Their going too the store";
 const gold = canonicalize_all(text, [replace(0, 5, "They're"), replace(12, 15, "to")]);

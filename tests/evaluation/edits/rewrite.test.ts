@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { apply_edits, replace } from "../../src/edits/edit.ts";
-import { rewrite_edits } from "../../src/edits/rewrite.ts";
+import { apply_edits, replace } from "../../../src/evaluation/edits/edit.ts";
+import { rewrite_edits } from "../../../src/evaluation/edits/rewrite.ts";
 
 describe("rewrite_edits", () => {
   it("recovers minimal edits from a rewritten sentence", () => {

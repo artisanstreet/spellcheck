@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
-import { corrected, parse_wi } from "../../src/corpus/wi.ts";
-import { Correction, Edit, replace } from "../../src/edits/edit.ts";
+import { corrected, parse_wi } from "../../../src/evaluation/corpus/wi.ts";
+import { Correction, Edit, replace } from "../../../src/evaluation/edits/edit.ts";
 
 const line = JSON.stringify({ id: "1-1", userid: "7", cefr: "A2", text: "It difficult answer.", edits: [[0, [[2, 2, " is"], [12, 12, " to"], [3, 12, null]]]] });
 

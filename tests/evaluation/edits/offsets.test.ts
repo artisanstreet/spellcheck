@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { code_point_offsets } from "../../src/edits/offsets.ts";
+import { code_point_offsets } from "../../../src/evaluation/edits/offsets.ts";
 
 describe("code_point_offsets", () => {
   it("maps code point indices to string indices across surrogate pairs", () => {

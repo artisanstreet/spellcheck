@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { parse_marked, unmark } from "../../src/corpus/marked.ts";
-import { apply_edits, replace } from "../../src/edits/edit.ts";
+import { parse_marked, unmark } from "../../../src/evaluation/corpus/marked.ts";
+import { apply_edits, replace } from "../../../src/evaluation/edits/edit.ts";
 
 describe("unmark", () => {
   it("turns inline marks into the written text plus edits", () => {
