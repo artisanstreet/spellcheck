@@ -2,6 +2,7 @@
   import { Effect, Option } from "effect";
   import { Browser } from "../../browser/browser.ts";
   import { Settings, with_site, type Pickiness, type Preferences } from "../../settings/settings.ts";
+  import Hint from "../../ui/hint.svelte";
   import PopupCard from "../../ui/popup-card.svelte";
   import Row from "../../ui/row.svelte";
   import Rule from "../../ui/rule.svelte";
@@ -67,10 +68,21 @@
     </Row>
   </div>
 
-  <Well>
-    <span class="name">Spellcheck by Artisan Street</span> is an on-device spellchecker powered by a small neural network, running on your {accelerator}. The
-    extension is free and licensed under BSD-3. You can find its repository <a href={repository} target="_blank" rel="noreferrer">here</a>.
-  </Well>
+  <div class="about">
+    <Well>
+      <span class="name">Spellcheck by Artisan Street</span> is an on-device spellchecker powered by a small neural network, running on
+      your
+      {#if accelerator === "GPU"}
+        <Hint label="GPU" title="Running on your graphics card">
+          Your GPU runs the network's math in parallel, so suggestions appear quickly and your processor stays free for everything else.
+        </Hint>{:else}
+        <Hint label="CPU" title="Running on your processor">
+          This browser didn't offer GPU access through WebGPU, so checking runs on your CPU instead. It still works, but suggestions take
+          longer and use more battery.
+        </Hint>{/if}. The extension is free and licensed under BSD-3. You can find its repository
+      <a href={repository} target="_blank" rel="noreferrer">here</a>.
+    </Well>
+  </div>
 </PopupCard>
 
 <style>
@@ -78,6 +90,10 @@
     display: flex;
     flex-direction: column;
     margin: calc(-1 * var(--sp-4)) calc(-1 * var(--sp-4)) 0;
+  }
+
+  .about {
+    position: relative;
   }
 
   .name {
