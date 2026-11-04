@@ -1,7 +1,7 @@
 <script lang="ts" effect>
-  import { Effect, Option } from "effect";
+  import { Effect } from "effect";
   import { Browser } from "../../browser/browser.ts";
-  import { Settings, with_site, type Pickiness, type Preferences } from "../../settings/settings.ts";
+  import { Settings, type Pickiness, type Preferences } from "../../settings/settings.ts";
   import Hint from "../../ui/hint.svelte";
   import PopupCard from "../../ui/popup-card.svelte";
   import Row from "../../ui/row.svelte";
@@ -12,9 +12,7 @@
 
   const settings = yield* Settings;
   const browser = yield* Browser;
-  const site = yield* browser.current_site;
   const accelerator = yield* browser.accelerator;
-  const site_name = (host: string) => host.replace(/^www\./, "");
   let preferences: Preferences = $state(yield* settings.load);
 
   const update = (next: Preferences) =>
@@ -44,18 +42,6 @@
         <Switch label="Check my writing" checked={preferences.enabled} toggle={(enabled) => update({ ...preferences, enabled })} />
       {/snippet}
     </Row>
-    {#if Option.isSome(site)}
-      <Rule />
-      <Row title="Check on {site_name(site.value)}">
-        {#snippet action()}
-          <Switch
-            label="Check on {site_name(site.value)}"
-            checked={!preferences.disabled_sites.includes(site.value)}
-            toggle={(checked) => update(with_site(preferences, site.value, checked))}
-          />
-        {/snippet}
-      </Row>
-    {/if}
     <Rule />
     <Row title="Pickiness" detail={pickiness_details[preferences.pickiness]}>
       <Segments

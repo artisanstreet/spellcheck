@@ -1,12 +1,12 @@
 <script lang="ts" effect>
-  import { Settings, checks_site } from "../../settings/settings.ts";
+  import { Settings } from "../../settings/settings.ts";
   import { focused_field } from "./focus.svelte.ts";
 
   const settings = yield* Settings;
   const preferences = yield* settings.load;
 </script>
 
-{#if checks_site(preferences, location.hostname) && focused_field.rect}
+{#if preferences.enabled && focused_field.rect}
   <div class="badge" style:top="{focused_field.rect.bottom - 28}px" style:left="{focused_field.rect.right - 96}px">
     Spellcheck
   </div>

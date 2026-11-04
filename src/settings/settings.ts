@@ -7,22 +7,11 @@ export type Pickiness = typeof Pickiness.Type;
 export const Preferences = Schema.Struct({
   enabled: Schema.Boolean,
   pickiness: Pickiness,
-  disabled_sites: Schema.Array(Schema.String),
 });
 
 export type Preferences = typeof Preferences.Type;
 
-export const defaults: Preferences = { enabled: true, pickiness: "balanced", disabled_sites: [] };
-
-export const checks_site = (preferences: Preferences, site: string): boolean =>
-  preferences.enabled && !preferences.disabled_sites.includes(site);
-
-export const with_site = (preferences: Preferences, site: string, checked: boolean): Preferences => ({
-  ...preferences,
-  disabled_sites: checked
-    ? preferences.disabled_sites.filter((disabled) => disabled !== site)
-    : [...new Set([...preferences.disabled_sites, site])],
-});
+export const defaults: Preferences = { enabled: true, pickiness: "balanced" };
 
 const key = "preferences";
 
