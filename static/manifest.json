@@ -4,7 +4,8 @@
   "version": "0.1.0",
   "description": "Context-aware spelling and grammar checking that runs entirely on your device.",
   "permissions": [
-    "storage"
+    "storage",
+    "activeTab"
   ],
   "action": {
     "default_popup": "index.html#/popup",
