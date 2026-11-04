@@ -11,7 +11,7 @@ const failure = (cause: unknown) => new EngineError({ engine: "tagger", cause })
 
 const ids_tensor = (ids: ReadonlyArray<number>) => new ort.Tensor("int64", BigInt64Array.from(ids, BigInt), [1, ids.length]);
 
-export const tagger_engine = (directory: string, thresholds: Thresholds) =>
+export const load_tagger = (directory: string) =>
   Effect.gen(function* () {
     const read = (name: string) => Effect.tryPromise({ try: () => readFile(join(directory, name)), catch: failure });
     const [model_data, tokenizer_json, tokenizer_config, labels_text] = yield* Effect.all([
@@ -39,6 +39,12 @@ export const tagger_engine = (directory: string, thresholds: Thresholds) =>
             }),
         ),
       );
+    return { vocabulary, run };
+  });
+
+export const tagger_engine = (directory: string, thresholds: Thresholds) =>
+  Effect.gen(function* () {
+    const { vocabulary, run } = yield* load_tagger(directory);
     return new Engine({
       name: "tagger",
       check: (text) =>

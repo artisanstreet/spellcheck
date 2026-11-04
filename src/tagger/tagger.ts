@@ -60,19 +60,35 @@ const best_edit = (probabilities: Float32Array, offset: number, size: number) =>
   );
 };
 
-const tag_sentence = <E>(vocabulary: Vocabulary, run: Run<E>, thresholds: Thresholds, content: string, start: number) =>
+export class Inferred extends Data.Class<{
+  readonly tokens: ReadonlyArray<Token>;
+  readonly probabilities: Probabilities;
+  readonly firsts: ReadonlyArray<number>;
+}> {}
+
+export const infer_sentence = <E>(vocabulary: Vocabulary, run: Run<E>, content: string, start: number) =>
   Effect.gen(function* () {
     const tokens = tokenize(content).map((token) => new Token({ ...token, start: token.start + start, end: token.end + start }));
     const input = encode_words(vocabulary, [start_marker, ...tokens.map((token) => token.text)]);
-    if (tokens.length === 0 || input.ids.length + 1 > token_limit) return Option.none<Tagged>();
+    if (tokens.length === 0 || input.ids.length + 1 > token_limit) return Option.none<Inferred>();
     const probabilities = yield* run([...input.ids, vocabulary.sep]);
-    const size = vocabulary.labels.length;
-    const verdicts = input.firsts.map((position) => {
-      const best = best_edit(probabilities.labels, position * size, size);
-      return verdict(probabilities.errors[position] ?? 0, vocabulary.labels[best.index]!, best.confidence, thresholds);
-    });
-    return Option.some(new Tagged({ tokens, start: verdicts[0]!, verdicts: verdicts.slice(1) }));
+    return Option.some(new Inferred({ tokens, probabilities, firsts: input.firsts }));
   });
+
+export const word_errors = (inferred: Inferred): ReadonlyArray<number> =>
+  inferred.firsts.slice(1).map((position) => inferred.probabilities.errors[position] ?? 0);
+
+const tagged_of = (vocabulary: Vocabulary, thresholds: Thresholds, inferred: Inferred): Tagged => {
+  const size = vocabulary.labels.length;
+  const verdicts = inferred.firsts.map((position) => {
+    const best = best_edit(inferred.probabilities.labels, position * size, size);
+    return verdict(inferred.probabilities.errors[position] ?? 0, vocabulary.labels[best.index]!, best.confidence, thresholds);
+  });
+  return new Tagged({ tokens: inferred.tokens, start: verdicts[0]!, verdicts: verdicts.slice(1) });
+};
+
+export const tag_sentence = <E>(vocabulary: Vocabulary, run: Run<E>, thresholds: Thresholds, content: string, start: number) =>
+  infer_sentence(vocabulary, run, content, start).pipe(Effect.map(Option.map((inferred) => tagged_of(vocabulary, thresholds, inferred))));
 
 export const tag_text = <E>(vocabulary: Vocabulary, run: Run<E>, thresholds: Thresholds, text: string) =>
   Effect.forEach(sentences(text), ({ content, start }) => tag_sentence(vocabulary, run, thresholds, content, start)).pipe(

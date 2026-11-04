@@ -4,6 +4,8 @@ import { parseArgs } from "node:util";
 import { Effect, Match } from "effect";
 import { load_corpora } from "./corpus/load.ts";
 import { EngineError, type Engine } from "./engines/engine.ts";
+import { Gate } from "../checking/check.ts";
+import { checker_engine } from "./engines/checker.ts";
 import { harper_engine } from "./engines/harper.ts";
 import { nspell_engine } from "./engines/nspell.ts";
 import { t5_engine } from "./engines/t5.ts";
@@ -20,6 +22,7 @@ const options = Effect.try(() =>
       tagger: { type: "string", default: "models/tagger" },
       "error-threshold": { type: "string", default: "0.5" },
       "label-threshold": { type: "string", default: "0.3" },
+      "spelling-margin": { type: "string", default: "0.1" },
       limit: { type: "string", default: String(Number.MAX_SAFE_INTEGER) },
       data: { type: "string", default: "data" },
       corpora: { type: "string", default: "corpora" },
@@ -39,6 +42,13 @@ const engine = (name: string, values: Options): Effect.Effect<Engine, EngineErro
       tagger_engine(
         values.tagger,
         new Thresholds({ error: Number(values["error-threshold"]), label: Number(values["label-threshold"]) }),
+      ),
+    ),
+    Match.when("checker", () =>
+      checker_engine(
+        values.tagger,
+        new Thresholds({ error: Number(values["error-threshold"]), label: Number(values["label-threshold"]) }),
+        new Gate({ margin: Number(values["spelling-margin"]) }),
       ),
     ),
     Match.orElse((unknown) => Effect.fail(new EngineError({ engine: unknown, cause: "unknown engine" }))),
