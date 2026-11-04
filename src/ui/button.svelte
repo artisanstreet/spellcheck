@@ -11,7 +11,7 @@
   <button type="button" class="button" data-tone="sand" {...rest}>{@render children()}</button>
 {:else}
   <span class="secondary">
-    <Card surface="var(--bg)" radius="var(--radius-sm)">
+    <Card surface="var(--bg)" radius="var(--radius-sm)" key>
       <button type="button" class="button" data-tone="secondary" {...rest}>{@render children()}</button>
     </Card>
   </span>
@@ -64,8 +64,38 @@
     transition-timing-function: ease-out;
   }
 
-  .button[data-tone="secondary"]:hover {
-    background: var(--hover-fill);
+  .button[data-tone="secondary"] {
+    border: 0;
+    border-radius: inherit;
+  }
+
+  .button[data-tone="secondary"]:active {
+    transform: none;
+  }
+
+  .button[data-tone="secondary"]::before,
+  .button[data-tone="secondary"]::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    transition: opacity var(--duration-quick) var(--ease-smooth-out);
+  }
+
+  .button[data-tone="secondary"]::before {
+    background: radial-gradient(ellipse 70% 110% at 50% 115%, oklch(1 0 0 / 0.07), oklch(1 0 0 / 0) 70%);
+  }
+
+  .button[data-tone="secondary"]::after {
+    background: radial-gradient(ellipse 90% 120% at 50% -15%, oklch(0 0 0 / 0.45), oklch(0 0 0 / 0) 70%);
+    box-shadow: inset 0 1px 0 oklch(0 0 0 / 0.5);
+    opacity: 0;
+  }
+
+  .button[data-tone="secondary"]:active::after {
+    opacity: 1;
+    transition-duration: var(--duration-micro);
   }
 
   .button[data-tone="sand"] {

@@ -76,6 +76,7 @@
 
   .thumb {
     margin: 0 calc(-1 * var(--sp-1));
+    color: var(--glass-ink-dim);
     width: 1rem;
     height: 1rem;
     fill: none;
