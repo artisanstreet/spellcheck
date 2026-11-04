@@ -4,6 +4,7 @@
   import { Settings, with_site, type Pickiness, type Preferences } from "../../settings/settings.ts";
   import PopupCard from "../../ui/popup-card.svelte";
   import Row from "../../ui/row.svelte";
+  import Rule from "../../ui/rule.svelte";
   import Segments from "../../ui/segments.svelte";
   import Switch from "../../ui/switch.svelte";
   import Well from "../../ui/well.svelte";
@@ -43,6 +44,7 @@
       {/snippet}
     </Row>
     {#if Option.isSome(site)}
+      <Rule />
       <Row title="Check on {site_name(site.value)}">
         {#snippet action()}
           <Switch
@@ -53,6 +55,7 @@
         {/snippet}
       </Row>
     {/if}
+    <Rule />
     <Row title="Pickiness" detail={pickiness_details[preferences.pickiness]}>
       <Segments
         label="Pickiness"
@@ -65,7 +68,7 @@
   </div>
 
   <Well>
-    Spellcheck by Artisan Street is an on-device spellchecker powered by a small neural network, running on your {accelerator}. The
+    <span class="name">Spellcheck by Artisan Street</span> is an on-device spellchecker powered by a small neural network, running on your {accelerator}. The
     extension is free. You can find its repository <a href={repository} target="_blank" rel="noreferrer">here</a>.
   </Well>
 </PopupCard>
@@ -77,9 +80,7 @@
     margin: calc(-1 * var(--sp-4)) calc(-1 * var(--sp-4)) 0;
   }
 
-  .rows > :global(* + *) {
-    box-shadow:
-      inset 0 1px 0 var(--rule-shade),
-      inset 0 2px 0 var(--rule-light);
+  .name {
+    color: var(--ink);
   }
 </style>
