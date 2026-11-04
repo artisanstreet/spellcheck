@@ -25,6 +25,7 @@ prepare = "tagger.prepare:main"
 train = "tagger.train:main"
 export = "tagger.export:main"
 prepare-learner = "tagger.learner:main"
+prepare-synthetic = "tagger.synthetic:main"
 quantize = "tagger.quantize:main"
 
 [build-system]
