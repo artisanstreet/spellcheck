@@ -68,7 +68,7 @@ def essays(path: Path) -> Iterable[tuple[str, tuple[Correction, ...]]]:
             essay = json.loads(line)
             annotations = dict((annotator, edits) for annotator, edits in essay["edits"])
             edits = annotations.get(0, next(iter(annotations.values()), []))
-            yield essay["text"], tuple(Correction(start, end, text) for start, end, text in edits)
+            yield essay["text"], tuple(Correction(start, end, text) for start, end, text, *_ in edits)
 
 
 def main() -> None:
