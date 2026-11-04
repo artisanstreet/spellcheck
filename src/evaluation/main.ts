@@ -22,6 +22,7 @@ const options = Effect.try(() =>
       tagger: { type: "string", default: "models/tagger" },
       "error-threshold": { type: "string", default: "0.5" },
       "label-threshold": { type: "string", default: "0.3" },
+      "delete-threshold": { type: "string", default: "0.95" },
       "spelling-margin": { type: "string", default: "0.1" },
       commonness: { type: "string", default: "0.8" },
       limit: { type: "string", default: String(Number.MAX_SAFE_INTEGER) },
@@ -42,13 +43,13 @@ const engine = (name: string, values: Options): Effect.Effect<Engine, EngineErro
     Match.when("tagger", () =>
       tagger_engine(
         values.tagger,
-        new Thresholds({ error: Number(values["error-threshold"]), label: Number(values["label-threshold"]) }),
+        new Thresholds({ error: Number(values["error-threshold"]), label: Number(values["label-threshold"]), delete: Number(values["delete-threshold"]) }),
       ),
     ),
     Match.when("checker", () =>
       checker_engine(
         values.tagger,
-        new Thresholds({ error: Number(values["error-threshold"]), label: Number(values["label-threshold"]) }),
+        new Thresholds({ error: Number(values["error-threshold"]), label: Number(values["label-threshold"]), delete: Number(values["delete-threshold"]) }),
         new Gate({ margin: Number(values["spelling-margin"]), commonness: Number(values.commonness) }),
       ),
     ),

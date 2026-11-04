@@ -41,10 +41,11 @@ export const Verdict = Data.taggedEnum<Verdict>();
 export class Thresholds extends Data.Class<{
   readonly error: number;
   readonly label: number;
+  readonly delete: number;
 }> {}
 
 export const verdict = (error: number, label: Label, confidence: number, thresholds: Thresholds): Verdict =>
-  error < thresholds.error
+  error < thresholds.error || (Label.$is("Delete")(label) && error < thresholds.delete)
     ? Verdict.Fine()
     : Label.$is("Keep")(label) || confidence < thresholds.label
       ? Verdict.Flag()

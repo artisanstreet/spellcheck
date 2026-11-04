@@ -68,9 +68,9 @@ const ids_tensor = (ids: ReadonlyArray<number>) => new ort.Tensor("int64", BigIn
 
 const thresholds_for = (pickiness: Pickiness): Thresholds =>
   Match.value(pickiness).pipe(
-    Match.when("relaxed", () => new Thresholds({ error: 0.8, label: 0 })),
-    Match.when("balanced", () => new Thresholds({ error: 0.65, label: 0 })),
-    Match.when("strict", () => new Thresholds({ error: 0.5, label: 0 })),
+    Match.when("relaxed", () => new Thresholds({ error: 0.8, label: 0, delete: 0.97 })),
+    Match.when("balanced", () => new Thresholds({ error: 0.65, label: 0, delete: 0.95 })),
+    Match.when("strict", () => new Thresholds({ error: 0.5, label: 0, delete: 0.9 })),
     Match.exhaustive,
   );
 

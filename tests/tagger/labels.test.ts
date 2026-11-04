@@ -17,10 +17,17 @@ describe("decode_label", () => {
 });
 
 describe("verdict", () => {
-  const thresholds = new Thresholds({ error: 0.5, label: 0.4 });
+  const thresholds = new Thresholds({ error: 0.5, label: 0.4, delete: 0.5 });
 
   it("leaves words alone below the error threshold", () => {
     expect(verdict(0.3, Label.Delete(), 0.9, thresholds)).toEqual(Verdict.Fine());
+  });
+
+  it("needs a stronger error signal before suggesting a deletion", () => {
+    const strict = new Thresholds({ error: 0.5, label: 0, delete: 0.9 });
+    expect(verdict(0.8, Label.Delete(), 0.9, strict)).toEqual(Verdict.Fine());
+    expect(verdict(0.95, Label.Delete(), 0.9, strict)).toEqual(Verdict.Fix({ label: Label.Delete() }));
+    expect(verdict(0.8, Label.Replace({ text: "is" }), 0.9, strict)).toEqual(Verdict.Fix({ label: Label.Replace({ text: "is" }) }));
   });
 
   it("flags errors it cannot confidently fix", () => {
