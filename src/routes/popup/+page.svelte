@@ -38,9 +38,9 @@
 
 <PopupCard>
   <div class="rows">
-    <Row title="Check everywhere">
+    <Row title="Check my writing" detail={preferences.enabled ? "Underlining mistakes as you type" : "Paused on every site"}>
       {#snippet action()}
-        <Switch label="Check everywhere" checked={preferences.enabled} toggle={(enabled) => update({ ...preferences, enabled })} />
+        <Switch label="Check my writing" checked={preferences.enabled} toggle={(enabled) => update({ ...preferences, enabled })} />
       {/snippet}
     </Row>
     {#if Option.isSome(site)}
@@ -69,7 +69,7 @@
 
   <Well>
     <span class="name">Spellcheck by Artisan Street</span> is an on-device spellchecker powered by a small neural network, running on your {accelerator}. The
-    extension is free. You can find its repository <a href={repository} target="_blank" rel="noreferrer">here</a>.
+    extension is free and licensed under BSD-3. You can find its repository <a href={repository} target="_blank" rel="noreferrer">here</a>.
   </Well>
 </PopupCard>
 
