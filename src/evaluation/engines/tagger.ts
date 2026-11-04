@@ -81,7 +81,7 @@ export const tagger_engine = (directory: string, thresholds: Thresholds) =>
       try: () => new Tokenizer(JSON.parse(tokenizer_json.toString()), JSON.parse(tokenizer_config.toString())),
       catch: failure,
     });
-    const labels = labels_text.toString().split("\n").filter((line) => line !== "").map(decode_label);
+    const labels = labels_text.toString().split(/\r?\n/).filter((line) => line !== "").map(decode_label);
     const model = new Model({ session, tokenizer, labels, cls: tokenizer.token_to_id("[CLS]") ?? 50281, sep: tokenizer.token_to_id("[SEP]") ?? 50282 });
     return new Engine({
       name: "tagger",
