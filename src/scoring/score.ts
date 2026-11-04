@@ -52,7 +52,7 @@ export const compare = (gold: ReadonlyArray<Canonical>, hypothesis: ReadonlyArra
   });
 };
 
-const by_f05 = Order.mapInput(Order.number, (comparison: Comparison) => metrics(comparison.correction).f05);
+const by_f05 = Order.mapInput(Order.Number, (comparison: Comparison) => metrics(comparison.correction).f05);
 
 export const compare_best = (
   annotations: ReadonlyArray<ReadonlyArray<Canonical>>,

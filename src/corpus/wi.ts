@@ -2,13 +2,13 @@ import { Effect, Schema } from "effect";
 import { Correction, Edit, apply_edits } from "../edits/edit.ts";
 import { Document } from "./document.ts";
 
-const WiEdit = Schema.Tuple(Schema.Number, Schema.Number, Schema.NullOr(Schema.String));
+const WiEdit = Schema.Tuple([Schema.Number, Schema.Number, Schema.NullOr(Schema.String)]);
 
-const WiLine = Schema.parseJson(
+const WiLine = Schema.fromJsonString(
   Schema.Struct({
     id: Schema.String,
     text: Schema.String,
-    edits: Schema.Array(Schema.Tuple(Schema.Number, Schema.Array(WiEdit))),
+    edits: Schema.Array(Schema.Tuple([Schema.Number, Schema.Array(WiEdit)])),
   }),
 );
 
@@ -19,7 +19,7 @@ export const parse_wi = (source: string) =>
   Effect.forEach(
     source.split("\n").filter((line) => line.trim() !== ""),
     (line) =>
-      Schema.decodeUnknown(WiLine)(line).pipe(
+      Schema.decodeUnknownEffect(WiLine)(line).pipe(
         Effect.map(
           (entry) =>
             new Document({

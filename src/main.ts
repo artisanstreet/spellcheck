@@ -38,7 +38,7 @@ const main = Effect.gen(function* () {
   const results = yield* Effect.forEach(engines, (selected) =>
     Effect.forEach(corpora, (corpus) =>
       Effect.logInfo(`${selected.name} on ${corpus.name} (${corpus.documents.length} documents)`).pipe(
-        Effect.zipRight(evaluate(selected, corpus)),
+        Effect.andThen(evaluate(selected, corpus)),
       ),
     ),
   ).pipe(Effect.map((groups) => groups.flat()));
