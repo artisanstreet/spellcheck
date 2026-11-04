@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Spellcheck",
+  "name": "Spellcheck by Artisan Street",
   "version": "0.1.0",
   "description": "Context-aware spelling and grammar checking that runs entirely on your device.",
   "permissions": [
@@ -9,7 +9,7 @@
   ],
   "action": {
     "default_popup": "index.html#/popup",
-    "default_title": "Spellcheck"
+    "default_title": "Spellcheck by Artisan Street"
   },
   "options_ui": {
     "page": "index.html#/options",
