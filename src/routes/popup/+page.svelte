@@ -73,12 +73,13 @@
       <span class="name">Spellcheck by Artisan Street</span> is an on-device spellchecker powered by a small neural network, running on
       your
       {#if accelerator === "GPU"}
-        <Hint label="GPU" title="Running on your graphics card">
-          Your GPU runs the network's math in parallel, so suggestions appear quickly and your processor stays free for everything else.
+        <Hint label="GPU" title="Fast mode is on">
+          Your computer has a special chip for heavy work like games and video. Spellcheck uses it, so suggestions show up right away and
+          the rest of your computer stays quick.
         </Hint>{:else}
-        <Hint label="CPU" title="Running on your processor">
-          This browser didn't offer GPU access through WebGPU, so checking runs on your CPU instead. It still works, but suggestions take
-          longer and use more battery.
+        <Hint label="CPU" title="Running in standard mode">
+          Your browser won't let Spellcheck use your computer's fast graphics chip, so it uses the main chip instead. Everything still
+          works. Suggestions may just take a moment longer, and your battery may run down a little faster.
         </Hint>{/if}. The extension is free and licensed under BSD-3. You can find its repository
       <a href={repository} target="_blank" rel="noreferrer">here</a>.
     </Well>

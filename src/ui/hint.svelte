@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
-  import Card from "./card.svelte";
 
   let { label, title, children }: { label: string; title: string; children: Snippet } = $props();
   const id = $props.id();
@@ -9,12 +8,8 @@
 <span class="hint"
   ><button type="button" class="trigger" aria-describedby={id}>{label}</button
   ><span class="bubble" role="tooltip" {id}>
-    <Card surface="var(--panel)" radius="var(--radius-sm)">
-      <span class="content">
-        <span class="title">{title}</span>
-        <span class="text">{@render children()}</span>
-      </span>
-    </Card>
+    <span class="title">{title}</span>
+    <span class="text">{@render children()}</span>
   </span></span
 >
 
@@ -38,6 +33,20 @@
     left: 0;
     z-index: 3;
     display: flex;
+    flex-direction: column;
+    gap: var(--sp-1);
+    padding: var(--sp-3);
+    border-radius: var(--radius-md);
+    background:
+      linear-gradient(180deg, oklch(1 0 0 / 0.08), oklch(1 0 0 / 0) 44%),
+      linear-gradient(145deg, oklch(from var(--glass-near) l c h / 0.22), oklch(from var(--glass-far) l c h / 0.16)),
+      oklch(from var(--panel) l c h / 0.8);
+    backdrop-filter: blur(20px) saturate(0.6);
+    box-shadow:
+      0 -1px 0 oklch(1 0 0 / 0.14),
+      inset 0 1px 0 oklch(1 0 0 / 0.1),
+      inset 0 -1px 0 var(--glass-rim-shade),
+      var(--shadow-overlay);
     opacity: 0;
     pointer-events: none;
     transform: translateY(4px);
@@ -51,15 +60,6 @@
     opacity: 1;
     pointer-events: auto;
     transform: none;
-  }
-
-  .content {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    flex-direction: column;
-    gap: var(--sp-1);
-    padding: var(--sp-3);
   }
 
   .title {
