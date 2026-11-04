@@ -5,6 +5,7 @@ import { Data, Effect } from "effect";
 import * as ort from "onnxruntime-node";
 import { rewrite_edits } from "../edits/rewrite.ts";
 import { Engine, EngineError } from "./engine.ts";
+import { sentences } from "./sentences.ts";
 
 const end_token = 1;
 const input_limit = 128;
@@ -25,12 +26,6 @@ const ids_tensor = (ids: ReadonlyArray<number>) => new ort.Tensor("int64", BigIn
 
 const argmax = (values: Float32Array): number =>
   values.reduce((best, value, index) => (value > (values[best] ?? -Infinity) ? index : best), 0);
-
-const sentences = (text: string) =>
-  Array.from(text.matchAll(/[^.!?\n]+(?:[.!?]+|(?=\n)|$)/g), (match) => {
-    const content = match[0].trim();
-    return { content, start: match.index + match[0].indexOf(content) };
-  }).filter((sentence) => sentence.content !== "");
 
 const generate = (model: Model, sentence: string) =>
   Effect.gen(function* () {
