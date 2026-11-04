@@ -1,0 +1,5 @@
+allowBuilds:
+  onnxruntime-node: false
+
+overrides:
+  vitest@*: 5.0.5
