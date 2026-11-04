@@ -2,6 +2,7 @@ import { Data, Effect, Option, Order, Array as Arr } from "effect";
 import { Token, tokenize } from "../evaluation/edits/tokens.ts";
 import { sentences } from "../evaluation/engines/sentences.ts";
 import { misspellings_of, type Dictionary, type Misspelling } from "../dictionary/dictionary.ts";
+import { typo_cost } from "../dictionary/typo.ts";
 import { Thresholds, Verdict } from "../tagger/labels.ts";
 import { Tagged, infer_sentence, tag_sentence, word_errors, type Run, type Vocabulary } from "../tagger/tagger.ts";
 
@@ -11,10 +12,10 @@ export class Spelled extends Data.Class<{ readonly token: Token; readonly candid
 
 export class Checked extends Data.Class<{ readonly spelled: ReadonlyArray<Spelled>; readonly tagged: ReadonlyArray<Tagged> }> {}
 
-const ranked_candidates = 5;
+const ranked_candidates = 6;
 const rank_penalty = 0.02;
 
-export class Gate extends Data.Class<{ readonly margin: number; readonly commonness: number }> {}
+export class Gate extends Data.Class<{ readonly margin: number; readonly commonness: number; readonly typo: number }> {}
 
 const by_start = Order.mapInput(Order.Number, (substitution: Substitution) => substitution.start);
 
@@ -88,7 +89,12 @@ const rank = <E>(
       fit(vocabulary, run, content, chosen, substitution(candidate)).pipe(
         Effect.map((score) => {
           const fit = Option.getOrElse(score, () => 0);
-          return { candidate, fit, score: fit + rank_penalty * index - gate.commonness * dictionary.commonness(candidate) };
+          return { candidate, fit, score:
+              fit +
+              rank_penalty * index -
+              gate.commonness * dictionary.commonness(candidate) +
+              gate.typo * typo_cost(misspelling.token.text, candidate),
+          };
         }),
       ),
     );

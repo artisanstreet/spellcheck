@@ -25,6 +25,7 @@ const options = Effect.try(() =>
       "delete-threshold": { type: "string", default: "0.95" },
       "spelling-margin": { type: "string", default: "0.1" },
       commonness: { type: "string", default: "0.8" },
+      typo: { type: "string", default: "0.2" },
       limit: { type: "string", default: String(Number.MAX_SAFE_INTEGER) },
       data: { type: "string", default: "data" },
       corpora: { type: "string", default: "corpora" },
@@ -50,7 +51,7 @@ const engine = (name: string, values: Options): Effect.Effect<Engine, EngineErro
       checker_engine(
         values.tagger,
         new Thresholds({ error: Number(values["error-threshold"]), label: Number(values["label-threshold"]), delete: Number(values["delete-threshold"]) }),
-        new Gate({ margin: Number(values["spelling-margin"]), commonness: Number(values.commonness) }),
+        new Gate({ margin: Number(values["spelling-margin"]), commonness: Number(values.commonness), typo: Number(values.typo) }),
       ),
     ),
     Match.orElse((unknown) => Effect.fail(new EngineError({ engine: unknown, cause: "unknown engine" }))),

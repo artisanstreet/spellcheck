@@ -74,7 +74,7 @@ const thresholds_for = (pickiness: Pickiness): Thresholds =>
     Match.exhaustive,
   );
 
-const spelling_gate = new Gate({ margin: 0.1, commonness: 0.8 });
+const spelling_gate = new Gate({ margin: 0.1, commonness: 0.8, typo: 0.2 });
 
 const check = (loaded: Effect.Effect<Effect.Success<typeof load>, ModelError>, request: typeof Infer.Type) =>
   Effect.gen(function* () {

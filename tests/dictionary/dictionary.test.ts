@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkable } from "../../src/dictionary/dictionary.ts";
+import { checkable, lexicon_of, nearby_words } from "../../src/dictionary/dictionary.ts";
 
 describe("checkable", () => {
   it("checks ordinary words and a capitalised word that starts a sentence", () => {
@@ -13,5 +13,19 @@ describe("checkable", () => {
     expect(checkable("iPhone", true)).toBe(false);
     expect(checkable("el", false)).toBe(false);
     expect(checkable("b2b", false)).toBe(false);
+  });
+});
+
+describe("nearby_words", () => {
+  const lexicon = lexicon_of(["the", "then", "tea", "hello", "help", "halo", "shoes", "should"]);
+  const commonness = (word: string) => (word === "the" ? 1 : 0.5);
+
+  it("finds likely intended words, including swapped first letters, cheapest first", () => {
+    expect(nearby_words(lexicon, commonness, "teh")[0]).toBe("the");
+    expect(nearby_words(lexicon, commonness, "helo")[0]).toBe("hello");
+  });
+
+  it("matches a capital at the start of the typed word", () => {
+    expect(nearby_words(lexicon, commonness, "Teh")[0]).toBe("The");
   });
 });
