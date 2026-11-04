@@ -1,14 +1,14 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
 
-  let { label, title, children }: { label: string; title: string; children: Snippet } = $props();
+  let { label, title, children }: { label: string; title: Snippet; children: Snippet } = $props();
   const id = $props.id();
 </script>
 
 <span class="hint"
   ><button type="button" class="trigger" aria-describedby={id}>{label}</button
   ><span class="bubble" role="tooltip" {id}>
-    <span class="title">{title}</span>
+    <span class="title">{@render title()}</span>
     <span class="text">{@render children()}</span>
   </span></span
 >
@@ -64,13 +64,16 @@
 
   .title {
     font-size: 0.8125rem;
+    font-weight: 600;
     line-height: 1.25rem;
-    color: var(--ink);
+    color: transparent;
+    background: linear-gradient(var(--ink) 50%, color-mix(in oklch, var(--ink), oklch(0.82 0.05 78) 40%));
+    background-clip: text;
   }
 
   .text {
     font-size: 0.75rem;
     line-height: 1.125rem;
-    color: var(--ink-dim);
+    color: var(--ink);
   }
 </style>

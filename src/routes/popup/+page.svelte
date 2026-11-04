@@ -73,13 +73,15 @@
       <span class="name">Spellcheck by Artisan Street</span> is an on-device spellchecker powered by a small neural network, running on
       your
       {#if accelerator === "GPU"}
-        <Hint label="GPU" title="Fast mode is on">
-          Your computer has a special chip for heavy work like games and video. Spellcheck uses it, so suggestions show up right away and
-          the rest of your computer stays quick.
+        <Hint label="GPU">
+          {#snippet title()}Spellcheck is graphics accelerated{/snippet}
+          The graphics processing unit on your device is accelerating computation for spellcheck. You're doing great!
         </Hint>{:else}
-        <Hint label="CPU" title="Running in standard mode">
-          Your browser won't let Spellcheck use your computer's fast graphics chip, so it uses the main chip instead. Everything still
-          works. Suggestions may just take a moment longer, and your battery may run down a little faster.
+        <Hint label="CPU">
+          {#snippet title()}Spellcheck is <span class="not">not</span> graphics accelerated{/snippet}
+          Your browser isn't letting spellcheck use the graphics processing unit on your device, so the central processing unit does the
+          computation instead. Everything still works, it's just slower and uses more battery. Updating your browser often turns
+          acceleration on.
         </Hint>{/if}. The extension is free and licensed under BSD-3. You can find its repository
       <a href={repository} target="_blank" rel="noreferrer">here</a>.
     </Well>
@@ -99,5 +101,9 @@
 
   .name {
     color: var(--ink);
+  }
+
+  .not {
+    color: var(--red-400);
   }
 </style>
