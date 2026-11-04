@@ -95,6 +95,7 @@ const copy_dictionaries = Effect.gen(function* () {
       ),
     ),
   );
+  yield* step("copy frequencies", () => cp(resolve("models/frequencies.txt"), join(output, "dictionary", "frequencies.txt")));
 });
 
 const main = Effect.gen(function* () {

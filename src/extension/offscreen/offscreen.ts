@@ -3,7 +3,7 @@ import { Data, Effect, Match, Schema } from "effect";
 import * as ort from "onnxruntime-web/webgpu";
 import type { Pickiness } from "../../settings/settings.ts";
 import { Gate, check_text } from "../../checking/check.ts";
-import { Source, dictionary_of } from "../../dictionary/dictionary.ts";
+import { Source, dictionary_of, frequencies_of } from "../../dictionary/dictionary.ts";
 import { checked_issues } from "../../suggestions/from-checked.ts";
 import { Thresholds } from "../../tagger/labels.ts";
 import { Probabilities, vocabulary_of } from "../../tagger/tagger.ts";
@@ -54,7 +54,8 @@ const load = Effect.gen(function* () {
       ),
     { concurrency: "unbounded" },
   );
-  const dictionary = yield* dictionary_of(sources).pipe(Effect.mapError((error) => new ModelError({ cause: error.cause })));
+  const frequencies = frequencies_of(yield* as_text("dictionary/frequencies.txt"));
+  const dictionary = yield* dictionary_of(sources, frequencies).pipe(Effect.mapError((error) => new ModelError({ cause: error.cause })));
   const session = yield* create_session(model);
   const tokenizer = yield* Effect.try({
     try: () => new Tokenizer(JSON.parse(tokenizer_json), JSON.parse(tokenizer_config)),
@@ -73,7 +74,7 @@ const thresholds_for = (pickiness: Pickiness): Thresholds =>
     Match.exhaustive,
   );
 
-const spelling_gate = new Gate({ margin: 0.1 });
+const spelling_gate = new Gate({ margin: 0.1, commonness: 0.8 });
 
 const check = (loaded: Effect.Effect<Effect.Success<typeof load>, ModelError>, request: typeof Infer.Type) =>
   Effect.gen(function* () {

@@ -23,6 +23,7 @@ const options = Effect.try(() =>
       "error-threshold": { type: "string", default: "0.5" },
       "label-threshold": { type: "string", default: "0.3" },
       "spelling-margin": { type: "string", default: "0.1" },
+      commonness: { type: "string", default: "0.8" },
       limit: { type: "string", default: String(Number.MAX_SAFE_INTEGER) },
       data: { type: "string", default: "data" },
       corpora: { type: "string", default: "corpora" },
@@ -48,7 +49,7 @@ const engine = (name: string, values: Options): Effect.Effect<Engine, EngineErro
       checker_engine(
         values.tagger,
         new Thresholds({ error: Number(values["error-threshold"]), label: Number(values["label-threshold"]) }),
-        new Gate({ margin: Number(values["spelling-margin"]) }),
+        new Gate({ margin: Number(values["spelling-margin"]), commonness: Number(values.commonness) }),
       ),
     ),
     Match.orElse((unknown) => Effect.fail(new EngineError({ engine: unknown, cause: "unknown engine" }))),

@@ -14,7 +14,7 @@ export class Checked extends Data.Class<{ readonly spelled: ReadonlyArray<Spelle
 const ranked_candidates = 5;
 const rank_penalty = 0.02;
 
-export class Gate extends Data.Class<{ readonly margin: number }> {}
+export class Gate extends Data.Class<{ readonly margin: number; readonly commonness: number }> {}
 
 const by_start = Order.mapInput(Order.Number, (substitution: Substitution) => substitution.start);
 
@@ -72,17 +72,28 @@ const fit = <E>(vocabulary: Vocabulary, run: Run<E>, content: string, chosen: Re
     });
   });
 
-const rank = <E>(vocabulary: Vocabulary, run: Run<E>, gate: Gate, content: string, chosen: ReadonlyArray<Substitution>, misspelling: Misspelling) =>
+const rank = <E>(
+  dictionary: Dictionary,
+  vocabulary: Vocabulary,
+  run: Run<E>,
+  gate: Gate,
+  content: string,
+  chosen: ReadonlyArray<Substitution>,
+  misspelling: Misspelling,
+) =>
   Effect.gen(function* () {
     const substitution = (text: string) => new Substitution({ start: misspelling.token.start, end: misspelling.token.end, text });
     const original = yield* fit(vocabulary, run, content, chosen, substitution(misspelling.token.text));
     const scored = yield* Effect.forEach(misspelling.candidates.slice(0, ranked_candidates), (candidate, index) =>
       fit(vocabulary, run, content, chosen, substitution(candidate)).pipe(
-        Effect.map((score) => ({ candidate, fit: Option.getOrElse(score, () => 0), score: Option.getOrElse(score, () => 0) + rank_penalty * index })),
+        Effect.map((score) => {
+          const fit = Option.getOrElse(score, () => 0);
+          return { candidate, fit, score: fit + rank_penalty * index - gate.commonness * dictionary.commonness(candidate) };
+        }),
       ),
     );
     const sorted = Arr.sort(scored, Order.mapInput(Order.Number, (entry: { score: number }) => entry.score));
-    const best = sorted[0]?.fit ?? 1;
+    const best = Math.min(1, ...scored.map((entry) => entry.fit));
     const wrong = Option.getOrElse(original, () => 1) - best >= gate.margin;
     return wrong
       ? Option.some([...sorted.map((entry) => entry.candidate), ...misspelling.candidates.slice(ranked_candidates)])
@@ -96,6 +107,7 @@ const check_sentence = <E>(dictionary: Dictionary, vocabulary: Vocabulary, run: 
     const tokens = tokenize(content);
     const spelled = yield* Effect.reduce(misspellings_of(dictionary, tokens), (): ReadonlyArray<Spelled> => [], (done, misspelling) =>
       rank(
+        dictionary,
         vocabulary,
         run,
         gate,
