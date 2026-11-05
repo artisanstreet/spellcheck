@@ -7,6 +7,7 @@
   import { Checker, Result } from "./checker.ts";
   import { caret_of, rects_of, replace, silence_native_spellcheck, surface_of } from "./editable.ts";
   import { focused_field as field } from "./focus.svelte.ts";
+  import { Anchor, Size, card_position } from "./placement.ts";
 
   const settings = yield* Settings;
   const checker = yield* Checker;
@@ -82,6 +83,18 @@
     ),
   );
 
+  let viewport_width = $state(0);
+  let viewport_height = $state(0);
+  let card_width = $state(0);
+  let card_height = $state(0);
+
+  const place = (rect: DOMRect) =>
+    card_position(
+      new Anchor({ left: rect.left, top: rect.top, bottom: rect.bottom }),
+      new Size({ width: card_width, height: card_height }),
+      new Size({ width: viewport_width, height: viewport_height }),
+    );
+
   const tone = (issue: Issue) => Kind.$match(issue.kind, { Spelling: () => "spelling", Grammar: () => "grammar" });
 
   const accept = (issue: Issue, replacement: string) => {
@@ -100,6 +113,7 @@
   };
 </script>
 
+<svelte:window bind:innerWidth={viewport_width} bind:innerHeight={viewport_height} />
 {yield* remember(words)}
 {#if Option.isSome(box)}
   <div class="layer" data-surface={surface}>
@@ -114,11 +128,14 @@
       ></span>
     {/each}
     {#each cards as card (card.issue)}
+      {@const point = place(card.rect)}
       <div
         class="card"
         role="presentation"
-        style:top="{card.rect.bottom + 6}px"
-        style:left="{Math.max(8, Math.min(card.rect.left, innerWidth - 280))}px"
+        bind:offsetWidth={card_width}
+        bind:offsetHeight={card_height}
+        style:top="{point.top}px"
+        style:left="{point.left}px"
         onmousedown={(event) => event.preventDefault()}
       >
         <SuggestionCard
