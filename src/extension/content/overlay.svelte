@@ -5,7 +5,7 @@
   import { Kind, type Issue } from "../../suggestions/issue.ts";
   import SuggestionCard from "../../ui/suggestion-card.svelte";
   import { Checker, Result } from "./checker.ts";
-  import { caret_of, rects_of, replace, surface_of } from "./editable.ts";
+  import { caret_of, rects_of, replace, silence_native_spellcheck, surface_of } from "./editable.ts";
   import { focused_field as field } from "./focus.svelte.ts";
 
   const settings = yield* Settings;
@@ -55,6 +55,8 @@
     field.editable;
     untrack(() => (open = Option.none()));
   });
+
+  $effect(() => (preferences.enabled ? Option.getOrUndefined(Option.map(field.editable, silence_native_spellcheck)) : undefined));
 
   $effect(() => {
     field.clicks;

@@ -173,3 +173,9 @@ export const surface_of = (element: HTMLElement): "light" | "dark" => {
   const [red = 255, green = 255, blue = 255] = (background.match(/[\d.]+/g) ?? []).map(Number);
   return 0.2126 * red + 0.7152 * green + 0.0722 * blue > 140 ? "light" : "dark";
 };
+
+export const silence_native_spellcheck = (editable: Editable): (() => void) => {
+  const before = editable.element.getAttribute("spellcheck");
+  editable.element.spellcheck = false;
+  return () => (before === null ? editable.element.removeAttribute("spellcheck") : editable.element.setAttribute("spellcheck", before));
+};
