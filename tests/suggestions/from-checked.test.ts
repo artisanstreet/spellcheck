@@ -10,12 +10,20 @@ describe("checked_issues", () => {
   it("offers the top dictionary candidates and lets spelling win over an overlapping tagger flag", () => {
     const text = "helo there";
     const checked = new Checked({
-      spelled: [new Spelled({ token: new Token({ text: "helo", start: 0, end: 4 }), candidates: ["hello", "help", "hole", "halo"] })],
+      spelled: [Spelled.Fixable({ token: new Token({ text: "helo", start: 0, end: 4 }), candidates: ["hello", "help", "hole", "halo"] })],
       tagged: [new Tagged({ tokens: tokenize(text), start: Verdict.Fine(), verdicts: [Verdict.Flag(), Verdict.Fine()] })],
     });
     const issues = checked_issues(text, checked);
     expect(issues).toHaveLength(1);
     expect(issues[0]!.kind).toEqual(Kind.Spelling());
     expect(issues[0]!.replacements).toEqual(["hello", "help", "hole"]);
+  });
+});
+
+describe("unknown words", () => {
+  it("are flagged without a suggestion", () => {
+    const issues = checked_issues("Zorbl", new Checked({ spelled: [Spelled.Unknown({ token: new Token({ text: "Zorbl", start: 0, end: 5 }) })], tagged: [] }));
+    expect(issues[0]!.replacements).toEqual([]);
+    expect(issues[0]!.kind).toEqual(Kind.Spelling());
   });
 });

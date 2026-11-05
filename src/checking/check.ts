@@ -8,7 +8,12 @@ import { Tagged, encode_sentence, tag_sentence, type Input, type Run, type Vocab
 
 export class Substitution extends Data.Class<{ readonly start: number; readonly end: number; readonly text: string }> {}
 
-export class Spelled extends Data.Class<{ readonly token: Token; readonly candidates: ReadonlyArray<string> }> {}
+export type Spelled = Data.TaggedEnum<{
+  Fixable: { readonly token: Token; readonly candidates: ReadonlyArray<string> };
+  Unknown: { readonly token: Token };
+}>;
+
+export const Spelled = Data.taggedEnum<Spelled>();
 
 export class Checked extends Data.Class<{ readonly spelled: ReadonlyArray<Spelled>; readonly tagged: ReadonlyArray<Tagged> }> {}
 
@@ -94,7 +99,7 @@ const rank = <E>(
           Math.max(0, ...entry.variant.window.map((word) => outputs[index]!.errors[entry.input.firsts[word + 1]!] ?? 0)),
         ]),
       );
-      return misspellings.flatMap((misspelling) => {
+      return misspellings.map((misspelling) => {
         const own = variants.filter((variant) => variant.misspelling === misspelling);
         const original = fits.get(own[0]!) ?? 1;
         const scored = own.slice(1).map((variant) => {
@@ -111,16 +116,14 @@ const rank = <E>(
         });
         const best = Math.min(1, ...scored.map((entry) => entry.fit));
         return original - best >= gate.margin
-          ? [
-              new Spelled({
-                token: misspelling.token,
-                candidates: [
-                  ...scored.toSorted((left, right) => left.score - right.score).map((entry) => entry.candidate),
-                  ...misspelling.candidates.slice(ranked_candidates),
-                ],
-              }),
-            ]
-          : [];
+          ? Spelled.Fixable({
+              token: misspelling.token,
+              candidates: [
+                ...scored.toSorted((left, right) => left.score - right.score).map((entry) => entry.candidate),
+                ...misspelling.candidates.slice(ranked_candidates),
+              ],
+            })
+          : Spelled.Unknown({ token: misspelling.token });
       });
     }),
   );
@@ -128,14 +131,31 @@ const rank = <E>(
 
 const shift_token = (token: Token, start: number) => new Token({ ...token, start: token.start + start, end: token.end + start });
 
+const shift_spelled = (spelled: Spelled, start: number): Spelled =>
+  Spelled.$match(spelled, {
+    Fixable: ({ token, candidates }) => Spelled.Fixable({ token: shift_token(token, start), candidates }),
+    Unknown: ({ token }) => Spelled.Unknown({ token: shift_token(token, start) }),
+  });
+
+const fix_of = (spelled: Spelled): ReadonlyArray<Substitution> =>
+  Spelled.$match(spelled, {
+    Fixable: ({ token, candidates }) => [new Substitution({ start: token.start, end: token.end, text: candidates[0]! })],
+    Unknown: () => [],
+  });
+
+export const without_repeats = (text: string, spelled: ReadonlyArray<Spelled>): ReadonlyArray<Spelled> => {
+  const counts = tokenize(text).reduce((seen, token) => seen.set(token.text.toLowerCase(), (seen.get(token.text.toLowerCase()) ?? 0) + 1), new Map<string, number>());
+  return spelled.filter((entry) => Spelled.$is("Fixable")(entry) || (counts.get(entry.token.text.toLowerCase()) ?? 0) < 2);
+};
+
 const check_sentence = <E>(dictionary: Dictionary, vocabulary: Vocabulary, run: Run<E>, thresholds: Thresholds, gate: Gate, content: string, start: number) =>
   Effect.gen(function* () {
     const tokens = tokenize(content);
     const spelled = yield* rank(dictionary, vocabulary, run, gate, content, misspellings_of(dictionary, tokens));
-    const substitutions = spelled.map((entry) => new Substitution({ start: entry.token.start, end: entry.token.end, text: entry.candidates[0]! }));
+    const substitutions = spelled.flatMap(fix_of);
     const tagged = yield* tag_sentence(vocabulary, run, thresholds, substitute(content, substitutions), 0);
     return new Checked({
-      spelled: spelled.map((entry) => new Spelled({ token: shift_token(entry.token, start), candidates: entry.candidates })),
+      spelled: spelled.map((entry) => shift_spelled(entry, start)),
       tagged: Option.toArray(
         Option.map(tagged, (found) => {
           const restored = restore(tokens, found, substitutions);
@@ -149,6 +169,6 @@ export const check_text = <E>(dictionary: Dictionary, vocabulary: Vocabulary, ru
   Effect.forEach(sentences(text), ({ content, start }) => check_sentence(dictionary, vocabulary, run, thresholds, gate, content, start)).pipe(
     Effect.map(
       (checked) =>
-        new Checked({ spelled: checked.flatMap((entry) => entry.spelled), tagged: checked.flatMap((entry) => entry.tagged) }),
+        new Checked({ spelled: without_repeats(text, checked.flatMap((entry) => entry.spelled)), tagged: checked.flatMap((entry) => entry.tagged) }),
     ),
   );

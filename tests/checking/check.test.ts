@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Substitution, restore, substitute } from "../../src/checking/check.ts";
+import { Spelled, Substitution, restore, substitute, without_repeats } from "../../src/checking/check.ts";
 import { tokenize } from "../../src/evaluation/edits/tokens.ts";
 import { Label, Verdict } from "../../src/tagger/labels.ts";
 import { Tagged } from "../../src/tagger/tagger.ts";
@@ -36,5 +36,14 @@ describe("restore", () => {
       verdicts: [Verdict.Fine(), Verdict.Fine(), Verdict.Flag(), Verdict.Flag(), Verdict.Fine(), Verdict.Flag()],
     });
     expect(restore(tokenize(text), tagged, split).verdicts).toEqual([Verdict.Fine(), Verdict.Fine(), Verdict.Fine(), Verdict.Fine(), Verdict.Flag()]);
+  });
+});
+
+describe("without_repeats", () => {
+  it("keeps fixable misspellings but drops unknown words typed more than once", () => {
+    const text = "Kubo said hi to Kubo and Zorbl";
+    const at = (word: string) => tokenize(text).find((token) => token.text === word)!;
+    const spelled = [Spelled.Unknown({ token: at("Kubo") }), Spelled.Unknown({ token: at("Zorbl") }), Spelled.Fixable({ token: at("hi"), candidates: ["hey"] })];
+    expect(without_repeats(text, spelled).map((entry) => entry.token.text)).toEqual(["Zorbl", "hi"]);
   });
 });

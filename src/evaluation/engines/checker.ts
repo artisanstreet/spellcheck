@@ -1,11 +1,11 @@
 import american from "dictionary-en";
 import british from "dictionary-en-gb";
 import { Effect } from "effect";
-import { Gate, check_text } from "../../checking/check.ts";
+import { Gate, Spelled, check_text } from "../../checking/check.ts";
 import { readFile } from "node:fs/promises";
 import { Source, dictionary_of, frequencies_of } from "../../dictionary/dictionary.ts";
 import { Thresholds, sentence_edits } from "../../tagger/labels.ts";
-import { replace } from "../edits/edit.ts";
+import { Correction, Edit, replace } from "../edits/edit.ts";
 import { Engine, EngineError } from "./engine.ts";
 import { load_tagger } from "./tagger.ts";
 
@@ -26,7 +26,12 @@ export const checker_engine = (directory: string, thresholds: Thresholds, gate: 
       check: (text) =>
         check_text(dictionary, vocabulary, run, thresholds, gate, text).pipe(
           Effect.map((checked) => [
-            ...checked.spelled.map((entry) => replace(entry.token.start, entry.token.end, entry.candidates[0]!)),
+            ...checked.spelled.map((entry) =>
+              Spelled.$match(entry, {
+                Fixable: ({ token, candidates }) => replace(token.start, token.end, candidates[0]!),
+                Unknown: ({ token }) => new Edit({ start: token.start, end: token.end, correction: Correction.Unknown() }),
+              }),
+            ),
             ...checked.tagged.flatMap((sentence) => sentence_edits(sentence.tokens, sentence.start, sentence.verdicts)),
           ]),
         ),

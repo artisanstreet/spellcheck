@@ -107,5 +107,4 @@ export const checkable = (word: string, sentence_start: boolean): boolean =>
 export const misspellings_of = (dictionary: Dictionary, tokens: ReadonlyArray<Token>): ReadonlyArray<Misspelling> =>
   tokens
     .filter((token, index) => checkable(token.text, index === 0) && !dictionary.known(token.text))
-    .map((token) => new Misspelling({ token, candidates: dictionary.suggest(token.text) }))
-    .filter((misspelling) => misspelling.candidates.length > 0);
+    .map((token) => new Misspelling({ token, candidates: dictionary.suggest(token.text) }));
