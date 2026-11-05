@@ -11,12 +11,15 @@
   const settings = yield* Settings;
   const checker = yield* Checker;
   const preferences = yield* settings.load;
+  let words: ReadonlyArray<string> = $state.raw(yield* settings.load_words);
+
+  const remember = (next: ReadonlyArray<string>) => settings.save_words(next).pipe(Effect.as(""), Effect.orElseSucceed(() => ""));
 
   const text = $derived(preferences.enabled ? field.settled : "");
 
   const result = $derived(
     yield* checker
-      .check(text, preferences.pickiness)
+      .check(text, preferences.pickiness, words)
       .pipe(Effect.orElseSucceed(() => new Result({ text: "", issues: [] }))),
   );
 
@@ -86,12 +89,18 @@
     open = Option.none();
   };
 
+  const learn = (issue: Issue) => {
+    words = [...new Set([...words, settled.text.slice(issue.start, issue.end)])];
+    open = Option.none();
+  };
+
   const dismiss = (issue: Issue) => {
     dismissed = new Set([...dismissed, key(settled.text, issue)]);
     open = Option.none();
   };
 </script>
 
+{yield* remember(words)}
 {#if Option.isSome(box)}
   <div class="layer" data-surface={surface}>
     {#each lines as line, index (index)}
@@ -112,7 +121,12 @@
         style:left="{Math.max(8, Math.min(card.rect.left, innerWidth - 280))}px"
         onmousedown={(event) => event.preventDefault()}
       >
-        <SuggestionCard issue={card.issue} accept={(replacement) => accept(card.issue, replacement)} dismiss={() => dismiss(card.issue)} />
+        <SuggestionCard
+          issue={card.issue}
+          accept={(replacement) => accept(card.issue, replacement)}
+          dismiss={() => dismiss(card.issue)}
+          learn={Kind.$is("Spelling")(card.issue.kind) ? () => learn(card.issue) : undefined}
+        />
       </div>
     {/each}
   </div>

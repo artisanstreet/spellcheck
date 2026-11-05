@@ -3,7 +3,7 @@ import { Data, Effect, Match, Schema } from "effect";
 import * as ort from "onnxruntime-web/webgpu";
 import type { Pickiness } from "../../settings/settings.ts";
 import { Gate, check_text } from "../../checking/check.ts";
-import { Source, dictionary_of, frequencies_of } from "../../dictionary/dictionary.ts";
+import { Source, dictionary_of, frequencies_of, with_words } from "../../dictionary/dictionary.ts";
 import { checked_issues } from "../../suggestions/from-checked.ts";
 import { Thresholds } from "../../tagger/labels.ts";
 import { batch_of, memoized, split_outputs, vocabulary_of } from "../../tagger/tagger.ts";
@@ -97,7 +97,7 @@ const spelling_gate = new Gate({ margin: 0.1, commonness: 0.8, typo: 0.2 });
 const check = (loaded: Effect.Effect<Effect.Success<typeof load>, ModelError>, request: typeof Infer.Type) =>
   Effect.gen(function* () {
     const { dictionary, vocabulary, run } = yield* loaded;
-    const checked = yield* check_text(dictionary, vocabulary, run, thresholds_for(request.pickiness), spelling_gate, request.text);
+    const checked = yield* check_text(with_words(dictionary, request.words), vocabulary, run, thresholds_for(request.pickiness), spelling_gate, request.text);
     return { issues: checked_issues(request.text, checked).map(to_wire) } satisfies Checked;
   });
 

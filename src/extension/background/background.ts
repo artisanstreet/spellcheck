@@ -17,7 +17,7 @@ const create_offscreen = Effect.tryPromise({
 
 const infer = (request: typeof Check.Type) =>
   Effect.tryPromise({
-    try: () => chrome.runtime.sendMessage(Infer.make({ text: request.text, pickiness: request.pickiness })),
+    try: () => chrome.runtime.sendMessage(Infer.make({ text: request.text, pickiness: request.pickiness, words: request.words })),
     catch: (cause) => new OffscreenError({ cause }),
   }).pipe(Effect.flatMap((response) => Schema.decodeUnknownEffect(Checked)(response)));
 

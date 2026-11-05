@@ -35,12 +35,29 @@ const save = (preferences: Preferences) =>
     catch: (cause) => new SettingsError({ cause }),
   });
 
+const words_key = "dictionary";
+
+const Words = Schema.Array(Schema.String);
+
+const load_words = Effect.tryPromise({
+  try: () => chrome.storage.local.get(words_key),
+  catch: (cause) => new SettingsError({ cause }),
+}).pipe(Effect.flatMap((stored) => Schema.decodeUnknownEffect(Words)(stored[words_key]).pipe(Effect.orElseSucceed((): ReadonlyArray<string> => []))));
+
+const save_words = (words: ReadonlyArray<string>) =>
+  Effect.tryPromise({
+    try: () => chrome.storage.local.set({ [words_key]: words }),
+    catch: (cause) => new SettingsError({ cause }),
+  });
+
 export class Settings extends Context.Service<
   Settings,
   {
     readonly load: Effect.Effect<Preferences, SettingsError>;
     readonly save: (preferences: Preferences) => Effect.Effect<void, SettingsError>;
+    readonly load_words: Effect.Effect<ReadonlyArray<string>, SettingsError>;
+    readonly save_words: (words: ReadonlyArray<string>) => Effect.Effect<void, SettingsError>;
   }
 >()("spellcheck/Settings") {
-  static readonly layer = Layer.succeed(Settings)({ load, save });
+  static readonly layer = Layer.succeed(Settings)({ load, save, load_words, save_words });
 }

@@ -108,3 +108,8 @@ export const misspellings_of = (dictionary: Dictionary, tokens: ReadonlyArray<To
   tokens
     .filter((token, index) => checkable(token.text, index === 0) && !dictionary.known(token.text))
     .map((token) => new Misspelling({ token, candidates: dictionary.suggest(token.text) }));
+
+export const with_words = (dictionary: Dictionary, words: ReadonlyArray<string>): Dictionary => {
+  const own = new Set(words.map((word) => word.toLowerCase()));
+  return new Dictionary({ ...dictionary, known: (word) => own.has(word.toLowerCase()) || dictionary.known(word) });
+};

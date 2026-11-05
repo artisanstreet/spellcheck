@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkable, lexicon_of, nearby_words } from "../../src/dictionary/dictionary.ts";
+import { Dictionary, checkable, lexicon_of, nearby_words, with_words } from "../../src/dictionary/dictionary.ts";
 
 describe("checkable", () => {
   it("checks ordinary words and a capitalised word that starts a sentence", () => {
@@ -37,5 +37,15 @@ describe("nearby_words", () => {
 
   it("matches a capital at the start of the typed word", () => {
     expect(nearby_words(lexicon, commonness, "Teh")[0]).toBe("The");
+  });
+});
+
+describe("with_words", () => {
+  const base = new Dictionary({ known: (word) => word === "cat", suggest: () => [], commonness: () => 0 });
+
+  it("knows the person's own words in any case and keeps the dictionary's", () => {
+    const own = with_words(base, ["Artisan"]);
+    expect(["artisan", "ARTISAN", "Artisan", "cat"].map(own.known)).toEqual([true, true, true, true]);
+    expect(own.known("dog")).toBe(false);
   });
 });

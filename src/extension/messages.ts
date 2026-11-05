@@ -12,9 +12,9 @@ export const WireIssue = Schema.Struct({
 
 export type WireIssue = typeof WireIssue.Type;
 
-export const Check = Schema.TaggedStruct("Check", { text: Schema.String, pickiness: Pickiness });
+export const Check = Schema.TaggedStruct("Check", { text: Schema.String, pickiness: Pickiness, words: Schema.Array(Schema.String) });
 
-export const Infer = Schema.TaggedStruct("Infer", { text: Schema.String, pickiness: Pickiness });
+export const Infer = Schema.TaggedStruct("Infer", { text: Schema.String, pickiness: Pickiness, words: Schema.Array(Schema.String) });
 
 export const Checked = Schema.Struct({ issues: Schema.Array(WireIssue) });
 

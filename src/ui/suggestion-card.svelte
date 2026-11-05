@@ -2,7 +2,12 @@
   import { Issue, Kind } from "../suggestions/issue.ts";
   import Button from "./button.svelte";
 
-  let { issue, accept, dismiss }: { issue: Issue; accept: (replacement: string) => void; dismiss: () => void } = $props();
+  let {
+    issue,
+    accept,
+    dismiss,
+    learn,
+  }: { issue: Issue; accept: (replacement: string) => void; dismiss: () => void; learn?: (() => void) | undefined } = $props();
 
   const tone = $derived(Kind.$match(issue.kind, { Spelling: () => "spelling", Grammar: () => "grammar" }));
   const title = $derived(Kind.$match(issue.kind, { Spelling: () => "Spelling", Grammar: () => "Grammar" }));
@@ -15,6 +20,9 @@
     {#each issue.replacements as replacement, index (replacement)}
       <Button tone={index === 0 ? "sand" : "secondary"} onclick={() => accept(replacement)}>{replacement === "" ? "Remove" : replacement}</Button>
     {/each}
+    {#if learn}
+      <Button tone="secondary" onclick={learn}>Add to dictionary</Button>
+    {/if}
     <Button aria-label="Wrong suggestion, hide it" title="Wrong suggestion" onclick={dismiss}>
       <svg class="thumb" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M17 14V2" />
