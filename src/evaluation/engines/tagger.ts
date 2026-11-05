@@ -4,12 +4,10 @@ import { Tokenizer } from "@huggingface/tokenizers";
 import { Effect } from "effect";
 import * as ort from "onnxruntime-node";
 import { Thresholds, sentence_edits } from "../../tagger/labels.ts";
-import { Probabilities, tag_text, vocabulary_of } from "../../tagger/tagger.ts";
+import { batch_of, split_outputs, tag_text, vocabulary_of } from "../../tagger/tagger.ts";
 import { Engine, EngineError } from "./engine.ts";
 
 const failure = (cause: unknown) => new EngineError({ engine: "tagger", cause });
-
-const ids_tensor = (ids: ReadonlyArray<number>) => new ort.Tensor("int64", BigInt64Array.from(ids, BigInt), [1, ids.length]);
 
 export const load_tagger = (directory: string) =>
   Effect.gen(function* () {
@@ -26,19 +24,25 @@ export const load_tagger = (directory: string) =>
       catch: failure,
     });
     const vocabulary = vocabulary_of(tokenizer, labels_text.toString());
-    const run = (ids: ReadonlyArray<number>) =>
-      Effect.tryPromise({
-        try: () => session.run({ input_ids: ids_tensor(ids), attention_mask: ids_tensor(ids.map(() => 1)) }),
+    const run = (rows: ReadonlyArray<ReadonlyArray<number>>) => {
+      const batch = batch_of(rows, vocabulary.pad);
+      return Effect.tryPromise({
+        try: () =>
+          session.run({
+            input_ids: new ort.Tensor("int64", batch.ids, [batch.rows, batch.length]),
+            attention_mask: new ort.Tensor("int64", batch.attention, [batch.rows, batch.length]),
+          }),
         catch: failure,
       }).pipe(
-        Effect.map(
-          (output) =>
-            new Probabilities({
-              labels: output["label_probabilities"]!.data as Float32Array,
-              errors: output["error_probabilities"]!.data as Float32Array,
-            }),
+        Effect.map((output) =>
+          split_outputs(
+            batch,
+            output["label_probabilities"]!.data as Float32Array,
+            output["error_probabilities"]!.data as Float32Array,
+          ),
         ),
       );
+    };
     return { vocabulary, run };
   });
 

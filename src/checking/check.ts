@@ -4,7 +4,7 @@ import { sentences } from "../evaluation/engines/sentences.ts";
 import { misspellings_of, type Dictionary, type Misspelling } from "../dictionary/dictionary.ts";
 import { typo_cost } from "../dictionary/typo.ts";
 import { Thresholds, Verdict } from "../tagger/labels.ts";
-import { Tagged, infer_sentence, tag_sentence, word_errors, type Run, type Vocabulary } from "../tagger/tagger.ts";
+import { Tagged, encode_sentence, tag_sentence, type Input, type Run, type Vocabulary } from "../tagger/tagger.ts";
 
 export class Substitution extends Data.Class<{ readonly start: number; readonly end: number; readonly text: string }> {}
 
@@ -33,9 +33,6 @@ const placed = (substitutions: ReadonlyArray<Substitution>) =>
     start: substitution.start + sorted.slice(0, index).reduce((total, other) => total + growth(other), 0),
   }));
 
-const corrected_start = (substitutions: ReadonlyArray<Substitution>, substitution: Substitution): number =>
-  placed(substitutions).find((entry) => entry.substitution === substitution)?.start ?? substitution.start;
-
 const original_position = (substitutions: ReadonlyArray<Substitution>, position: number): Option.Option<number> => {
   const entries = placed(substitutions);
   const inside = entries.some((entry) => position >= entry.start && position < entry.start + entry.substitution.text.length);
@@ -59,19 +56,22 @@ export const restore = (original: ReadonlyArray<Token>, corrected: Tagged, subst
   });
 };
 
-const fit = <E>(vocabulary: Vocabulary, run: Run<E>, content: string, chosen: ReadonlyArray<Substitution>, candidate: Substitution) =>
-  Effect.gen(function* () {
-    const all = [...chosen, candidate];
-    const inferred = yield* infer_sentence(vocabulary, run, substitute(content, all), 0);
-    const start = corrected_start(all, candidate);
-    const end = start + candidate.text.length;
-    return Option.map(inferred, (found) => {
-      const errors = word_errors(found);
-      const covered = found.tokens.flatMap((token, index) => (token.end > start && token.start < end ? [index] : []));
-      const window = covered.length === 0 ? [] : errors.slice(Math.max(0, covered[0]! - 1), covered[covered.length - 1]! + 2);
-      return Math.max(0, ...window);
-    });
-  });
+class Variant extends Data.Class<{
+  readonly misspelling: Misspelling;
+  readonly position: number;
+  readonly text: string;
+  readonly input: Option.Option<Input>;
+  readonly window: ReadonlyArray<number>;
+}> {}
+
+const variant_of = (vocabulary: Vocabulary, content: string, misspelling: Misspelling, position: number, text: string): Variant => {
+  const corrected = substitute(content, [new Substitution({ start: misspelling.token.start, end: misspelling.token.end, text })]);
+  const tokens = tokenize(corrected);
+  const end = misspelling.token.start + text.length;
+  const covered = tokens.flatMap((token, index) => (token.end > misspelling.token.start && token.start < end ? [index] : []));
+  const window = covered.length === 0 ? [] : tokens.map((_, index) => index).slice(Math.max(0, covered[0]! - 1), covered[covered.length - 1]! + 2);
+  return new Variant({ misspelling, position, text, input: encode_sentence(vocabulary, tokens), window });
+};
 
 const rank = <E>(
   dictionary: Dictionary,
@@ -79,53 +79,59 @@ const rank = <E>(
   run: Run<E>,
   gate: Gate,
   content: string,
-  chosen: ReadonlyArray<Substitution>,
-  misspelling: Misspelling,
-) =>
-  Effect.gen(function* () {
-    const substitution = (text: string) => new Substitution({ start: misspelling.token.start, end: misspelling.token.end, text });
-    const original = yield* fit(vocabulary, run, content, chosen, substitution(misspelling.token.text));
-    const scored = yield* Effect.forEach(misspelling.candidates.slice(0, ranked_candidates), (candidate, index) =>
-      fit(vocabulary, run, content, chosen, substitution(candidate)).pipe(
-        Effect.map((score) => {
-          const fit = Option.getOrElse(score, () => 0);
-          return { candidate, fit, score:
+  misspellings: ReadonlyArray<Misspelling>,
+): Effect.Effect<ReadonlyArray<Spelled>, E> => {
+  const variants = misspellings.flatMap((misspelling) => [
+    variant_of(vocabulary, content, misspelling, -1, misspelling.token.text),
+    ...misspelling.candidates.slice(0, ranked_candidates).map((candidate, position) => variant_of(vocabulary, content, misspelling, position, candidate)),
+  ]);
+  const runnable = variants.flatMap((variant) => Option.toArray(Option.map(variant.input, (input) => ({ variant, input }))));
+  return (runnable.length === 0 ? Effect.succeed([]) : run(runnable.map((entry) => entry.input.ids))).pipe(
+    Effect.map((outputs) => {
+      const fits = new Map(
+        runnable.map((entry, index) => [
+          entry.variant,
+          Math.max(0, ...entry.variant.window.map((word) => outputs[index]!.errors[entry.input.firsts[word + 1]!] ?? 0)),
+        ]),
+      );
+      return misspellings.flatMap((misspelling) => {
+        const own = variants.filter((variant) => variant.misspelling === misspelling);
+        const original = fits.get(own[0]!) ?? 1;
+        const scored = own.slice(1).map((variant) => {
+          const fit = fits.get(variant) ?? 0;
+          return {
+            candidate: variant.text,
+            fit,
+            score:
               fit +
-              rank_penalty * index -
-              gate.commonness * dictionary.commonness(candidate) +
-              gate.typo * typo_cost(misspelling.token.text, candidate),
+              rank_penalty * variant.position -
+              gate.commonness * dictionary.commonness(variant.text) +
+              gate.typo * typo_cost(misspelling.token.text, variant.text),
           };
-        }),
-      ),
-    );
-    const sorted = Arr.sort(scored, Order.mapInput(Order.Number, (entry: { score: number }) => entry.score));
-    const best = Math.min(1, ...scored.map((entry) => entry.fit));
-    const wrong = Option.getOrElse(original, () => 1) - best >= gate.margin;
-    return wrong
-      ? Option.some([...sorted.map((entry) => entry.candidate), ...misspelling.candidates.slice(ranked_candidates)])
-      : Option.none<ReadonlyArray<string>>();
-  });
+        });
+        const best = Math.min(1, ...scored.map((entry) => entry.fit));
+        return original - best >= gate.margin
+          ? [
+              new Spelled({
+                token: misspelling.token,
+                candidates: [
+                  ...scored.toSorted((left, right) => left.score - right.score).map((entry) => entry.candidate),
+                  ...misspelling.candidates.slice(ranked_candidates),
+                ],
+              }),
+            ]
+          : [];
+      });
+    }),
+  );
+};
 
 const shift_token = (token: Token, start: number) => new Token({ ...token, start: token.start + start, end: token.end + start });
 
 const check_sentence = <E>(dictionary: Dictionary, vocabulary: Vocabulary, run: Run<E>, thresholds: Thresholds, gate: Gate, content: string, start: number) =>
   Effect.gen(function* () {
     const tokens = tokenize(content);
-    const spelled = yield* Effect.reduce(misspellings_of(dictionary, tokens), (): ReadonlyArray<Spelled> => [], (done, misspelling) =>
-      rank(
-        dictionary,
-        vocabulary,
-        run,
-        gate,
-        content,
-        done.map((entry) => new Substitution({ start: entry.token.start, end: entry.token.end, text: entry.candidates[0]! })),
-        misspelling,
-      ).pipe(
-        Effect.map((candidates) =>
-          Option.match(candidates, { onNone: () => done, onSome: (found) => [...done, new Spelled({ token: misspelling.token, candidates: found })] }),
-        ),
-      ),
-    );
+    const spelled = yield* rank(dictionary, vocabulary, run, gate, content, misspellings_of(dictionary, tokens));
     const substitutions = spelled.map((entry) => new Substitution({ start: entry.token.start, end: entry.token.end, text: entry.candidates[0]! }));
     const tagged = yield* tag_sentence(vocabulary, run, thresholds, substitute(content, substitutions), 0);
     return new Checked({

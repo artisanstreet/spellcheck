@@ -6,7 +6,7 @@ import { Gate, check_text } from "../../checking/check.ts";
 import { Source, dictionary_of, frequencies_of } from "../../dictionary/dictionary.ts";
 import { checked_issues } from "../../suggestions/from-checked.ts";
 import { Thresholds } from "../../tagger/labels.ts";
-import { Probabilities, vocabulary_of } from "../../tagger/tagger.ts";
+import { batch_of, memoized, split_outputs, vocabulary_of } from "../../tagger/tagger.ts";
 import { Infer, to_wire, type Checked } from "../messages.ts";
 
 class ModelError extends Data.TaggedError("ModelError")<{ readonly cause: unknown }> {}
@@ -41,6 +41,8 @@ const create_session = (model: ArrayBuffer) =>
     ),
   );
 
+const cached_rows = 2000;
+
 const load = Effect.gen(function* () {
   const [model, tokenizer_json, tokenizer_config, labels] = yield* Effect.all(
     [as_bytes("model/model.onnx"), as_text("model/tokenizer.json"), as_text("model/tokenizer_config.json"), as_text("model/labels.txt")],
@@ -61,10 +63,26 @@ const load = Effect.gen(function* () {
     try: () => new Tokenizer(JSON.parse(tokenizer_json), JSON.parse(tokenizer_config)),
     catch: (cause) => new ModelError({ cause }),
   });
-  return { session, dictionary, vocabulary: vocabulary_of(tokenizer, labels) };
+  const vocabulary = vocabulary_of(tokenizer, labels);
+  const run = (rows: ReadonlyArray<ReadonlyArray<number>>) => {
+    const batch = batch_of(rows, vocabulary.pad);
+    return Effect.tryPromise({
+      try: async () => {
+        const output = await session.run({
+          input_ids: new ort.Tensor("int64", batch.ids, [batch.rows, batch.length]),
+          attention_mask: new ort.Tensor("int64", batch.attention, [batch.rows, batch.length]),
+        });
+        return split_outputs(
+          batch,
+          (await output["label_probabilities"]!.getData()) as Float32Array,
+          (await output["error_probabilities"]!.getData()) as Float32Array,
+        );
+      },
+      catch: (cause) => new ModelError({ cause }),
+    });
+  };
+  return { dictionary, vocabulary, run: memoized(run, cached_rows) };
 });
-
-const ids_tensor = (ids: ReadonlyArray<number>) => new ort.Tensor("int64", BigInt64Array.from(ids, BigInt), [1, ids.length]);
 
 const thresholds_for = (pickiness: Pickiness): Thresholds =>
   Match.value(pickiness).pipe(
@@ -78,23 +96,7 @@ const spelling_gate = new Gate({ margin: 0.1, commonness: 0.8, typo: 0.2 });
 
 const check = (loaded: Effect.Effect<Effect.Success<typeof load>, ModelError>, request: typeof Infer.Type) =>
   Effect.gen(function* () {
-    const { session, dictionary, vocabulary } = yield* loaded;
-    const run = (ids: ReadonlyArray<number>) =>
-      Effect.tryPromise({
-        try: () => session.run({ input_ids: ids_tensor(ids), attention_mask: ids_tensor(ids.map(() => 1)) }),
-        catch: (cause) => new ModelError({ cause }),
-      }).pipe(
-        Effect.flatMap((output) =>
-          Effect.tryPromise({
-            try: async () =>
-              new Probabilities({
-                labels: (await output["label_probabilities"]!.getData()) as Float32Array,
-                errors: (await output["error_probabilities"]!.getData()) as Float32Array,
-              }),
-            catch: (cause) => new ModelError({ cause }),
-          }),
-        ),
-      );
+    const { dictionary, vocabulary, run } = yield* loaded;
     const checked = yield* check_text(dictionary, vocabulary, run, thresholds_for(request.pickiness), spelling_gate, request.text);
     return { issues: checked_issues(request.text, checked).map(to_wire) } satisfies Checked;
   });
