@@ -1,7 +1,6 @@
 <script lang="ts">
   import { Option } from "effect";
   import { Draft, Issue, Segment, accept, dismiss, segments } from "../../suggestions/issue.ts";
-  import IssueCount from "../../ui/issue-count.svelte";
   import Mark from "../../ui/mark.svelte";
   import SuggestionCard from "../../ui/suggestion-card.svelte";
 
@@ -56,7 +55,6 @@
       {:else}{segment.text}{/if}
     {/each}
   </div>
-  <span class="count"><IssueCount issues={draft.issues} /></span>
   {#if Option.isSome(open)}
     {@const current = open.value}
     <div class="anchor" style:left="{current.left}px" style:top="{current.top}px">
@@ -100,13 +98,6 @@
 
   .text {
     white-space: pre-wrap;
-  }
-
-  .count {
-    position: absolute;
-    right: 0.625rem;
-    bottom: 0.625rem;
-    display: flex;
   }
 
   .anchor {
