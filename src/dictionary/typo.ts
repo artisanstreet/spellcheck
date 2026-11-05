@@ -16,7 +16,7 @@ const substitution_cost = (left: string, right: string): number =>
   left === right ? 0 : adjacent(left, right) || (vowels.has(left) && vowels.has(right)) ? 0.6 : 1;
 
 const doubling_cost = (text: string, index: number): number =>
-  text[index] !== undefined && (text[index] === text[index - 1] || text[index] === text[index + 1]) ? 0.4 : 1;
+  text[index] === "'" ? 0.3 : text[index] !== undefined && (text[index] === text[index - 1] || text[index] === text[index + 1]) ? 0.4 : 1;
 
 export const typo_cost = (typed: string, intended: string): number => {
   const source = typed.toLowerCase();

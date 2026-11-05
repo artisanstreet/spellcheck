@@ -1,5 +1,5 @@
 import nspell from "nspell";
-import { Data, Effect } from "effect";
+import { Data, Effect, Option } from "effect";
 import type { Token } from "../evaluation/edits/tokens.ts";
 import { slang } from "./slang.ts";
 import { typo_cost } from "./typo.ts";
@@ -46,14 +46,17 @@ const matching_case = (typed: string, word: string) =>
 export type Lexicon = ReadonlyMap<string, ReadonlyArray<string>>;
 
 export const lexicon_of = (words: ReadonlyArray<string>): Lexicon =>
-  words.reduce((lexicon, word) => lexicon.set(word[0]!, [...(lexicon.get(word[0]!) ?? []), word]), new Map<string, Array<string>>());
+  words.reduce((lexicon, word) => {
+    const initial = word[0]!.toLowerCase();
+    return lexicon.set(initial, [...(lexicon.get(initial) ?? []), word]);
+  }, new Map<string, Array<string>>());
 
 export const nearby_words = (lexicon: Lexicon, commonness: (word: string) => number, typed: string): ReadonlyArray<string> => {
   const lower = typed.toLowerCase();
   const initials = new Set([lower[0], lower[1]].filter((letter) => letter !== undefined));
   return [...initials]
     .flatMap((letter) => lexicon.get(letter) ?? [])
-    .filter((word) => Math.abs(word.length - lower.length) <= 2 && word !== lower)
+    .filter((word) => Math.abs(word.length - lower.length) <= 2 && word.toLowerCase() !== lower)
     .map((word) => ({ word, cost: typo_cost(lower, word) }))
     .filter((entry) => entry.cost <= nearby_cost)
     .map((entry) => ({ word: entry.word, score: entry.cost - 0.5 * commonness(entry.word) }))
@@ -69,7 +72,8 @@ export const dictionary_of = (sources: ReadonlyArray<Source>, frequencies: Reado
     Effect.map((spellers) => {
       const correct = (word: string) => spellers.some((speller) => speller.correct(word));
       const commonness = commonness_in(frequencies);
-      const lexicon = lexicon_of([...frequencies.keys()].slice(0, lexicon_size).filter(correct));
+      const proper = (word: string) => [word, word.slice(0, 1).toUpperCase() + word.slice(1)].find(correct);
+      const lexicon = lexicon_of([...frequencies.keys()].slice(0, lexicon_size).flatMap((word) => Option.toArray(Option.fromNullishOr(proper(word)))));
       return new Dictionary({
         known: (word) => slang.has(word.toLowerCase()) || correct(word) || correct(`${word}'t`),
         suggest: (word) =>

@@ -14,6 +14,10 @@ describe("typo_cost", () => {
     expect(typo_cost("thz", "the")).toBe(1);
   });
 
+  it("treats a missing apostrophe as a near miss", () => {
+    expect(typo_cost("Thats", "That's")).toBeLessThan(typo_cost("Thats", "Hats"));
+  });
+
   it("ignores case", () => {
     expect(typo_cost("Tusday", "tuesday")).toBe(typo_cost("tusday", "tuesday"));
   });

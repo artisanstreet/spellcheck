@@ -25,6 +25,10 @@ describe("nearby_words", () => {
     expect(nearby_words(lexicon, commonness, "helo")[0]).toBe("hello");
   });
 
+  it("keeps words whose proper form is capitalised", () => {
+    expect(nearby_words(lexicon_of(["I've", "ice"]), () => 0.5, "Ive")).toContain("I've");
+  });
+
   it("matches a capital at the start of the typed word", () => {
     expect(nearby_words(lexicon, commonness, "Teh")[0]).toBe("The");
   });
