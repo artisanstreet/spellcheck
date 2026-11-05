@@ -1,3 +1,4 @@
+import { Option } from "effect";
 import { describe, expect, it } from "vitest";
 import { Dictionary, checkable, lexicon_of, nearby_words, with_words } from "../../src/dictionary/dictionary.ts";
 
@@ -41,7 +42,7 @@ describe("nearby_words", () => {
 });
 
 describe("with_words", () => {
-  const base = new Dictionary({ known: (word) => word === "cat", suggest: () => [], commonness: () => 0 });
+  const base = new Dictionary({ known: (word) => word === "cat", suggest: () => [], commonness: () => 0, certain: () => Option.none(), cost: () => 0 });
 
   it("knows the person's own words in any case and keeps the dictionary's", () => {
     const own = with_words(base, ["Artisan"]);

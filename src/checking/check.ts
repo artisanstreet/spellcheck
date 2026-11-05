@@ -2,7 +2,6 @@ import { Data, Effect, Option, Order, Array as Arr } from "effect";
 import { Token, tokenize } from "../evaluation/edits/tokens.ts";
 import { sentences } from "../evaluation/engines/sentences.ts";
 import { misspellings_of, type Dictionary, type Misspelling } from "../dictionary/dictionary.ts";
-import { typo_cost } from "../dictionary/typo.ts";
 import { Thresholds, Verdict } from "../tagger/labels.ts";
 import { Tagged, encode_sentence, tag_sentence, type Input, type Run, type Vocabulary } from "../tagger/tagger.ts";
 
@@ -111,11 +110,14 @@ const rank = <E>(
               fit +
               rank_penalty * variant.position -
               gate.commonness * dictionary.commonness(variant.text) +
-              gate.typo * typo_cost(misspelling.token.text, variant.text),
+              gate.typo * dictionary.cost(misspelling.token.text, variant.text),
           };
         });
         const best = Math.min(1, ...scored.map((entry) => entry.fit));
-        return original - best >= gate.margin
+        const sure = dictionary.certain(misspelling.token.text);
+        return Option.isSome(sure)
+          ? Spelled.Fixable({ token: misspelling.token, candidates: [sure.value, ...misspelling.candidates.filter((candidate) => candidate !== sure.value)] })
+          : original - best >= gate.margin
           ? Spelled.Fixable({
               token: misspelling.token,
               candidates: [

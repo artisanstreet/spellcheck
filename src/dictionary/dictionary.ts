@@ -3,6 +3,8 @@ import { Data, Effect, Option } from "effect";
 import type { Token } from "../evaluation/edits/tokens.ts";
 import { slang } from "./slang.ts";
 import { typo_cost } from "./typo.ts";
+import { misspellings } from "./misspellings.ts";
+import { inflections_of } from "./morphology.ts";
 import { web_words } from "./web-words.ts";
 
 export class DictionaryError extends Data.TaggedError("DictionaryError")<{ readonly cause: unknown }> {}
@@ -13,6 +15,8 @@ export class Dictionary extends Data.Class<{
   readonly known: (word: string) => boolean;
   readonly suggest: (word: string) => ReadonlyArray<string>;
   readonly commonness: (word: string) => number;
+  readonly certain: (word: string) => Option.Option<string>;
+  readonly cost: (typed: string, candidate: string) => number;
 }> {}
 
 export class Misspelling extends Data.Class<{
@@ -25,6 +29,8 @@ const nearby_cost = 1.2;
 const completion_cost = 2;
 const short_word = 3;
 const lexicon_size = 60_000;
+const inflection_cost = 0.3;
+const alphabet = Array.from("abcdefghijklmnopqrstuvwxyz");
 
 export const frequencies_of = (text: string): ReadonlyMap<string, number> =>
   new Map(
@@ -82,14 +88,26 @@ export const dictionary_of = (sources: ReadonlyArray<Source>, frequencies: Reado
       const commonness = commonness_in(frequencies);
       const proper = (word: string) => [word, word.slice(0, 1).toUpperCase() + word.slice(1)].find(correct);
       const lexicon = lexicon_of([...frequencies.keys()].slice(0, lexicon_size).flatMap((word) => Option.toArray(Option.fromNullishOr(proper(word)))));
+      const known = (word: string) => slang.has(word.toLowerCase()) || web_words.has(word.toLowerCase()) || correct(word) || correct(`${word}'t`);
+      const certain = (word: string) => Option.map(Option.fromNullishOr(misspellings.get(word.toLowerCase())), (fix) => matching_case(word, fix));
+      const inflections = (word: string) => inflections_of(word).filter(correct).map((form) => matching_case(word, form));
+      const prefixed = (word: string) =>
+        alphabet.map((letter) => letter + word.toLowerCase()).filter((form) => correct(form) && commonness(form) > 0).map((form) => matching_case(word, form));
       return new Dictionary({
-        known: (word) => slang.has(word.toLowerCase()) || web_words.has(word.toLowerCase()) || correct(word) || correct(`${word}'t`),
+        known,
         suggest: (word) =>
-          [...new Set([...nearby_words(lexicon, commonness, word).slice(0, candidate_limit), ...spellers.flatMap((speller) => speller.suggest(word))])].slice(
-            0,
-            candidate_limit + 2,
-          ),
+          [
+            ...new Set([
+              ...Option.toArray(certain(word)),
+              ...inflections(word),
+              ...prefixed(word),
+              ...nearby_words(lexicon, commonness, word).slice(0, candidate_limit),
+              ...spellers.flatMap((speller) => speller.suggest(word)),
+            ]),
+          ].slice(0, candidate_limit + 2),
         commonness,
+        certain,
+        cost: (typed, candidate) => (inflections_of(typed).includes(candidate.toLowerCase()) ? inflection_cost : typo_cost(typed, candidate)),
       });
     }),
   );
