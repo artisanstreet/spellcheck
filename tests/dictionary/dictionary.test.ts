@@ -15,6 +15,11 @@ describe("checkable", () => {
     expect(checkable("el", false)).toBe(false);
     expect(checkable("b2b", false)).toBe(false);
   });
+
+  it("skips words with letters English doesn't use, like foreign names", () => {
+    expect(checkable("María", true)).toBe(false);
+    expect(checkable("joão", false)).toBe(false);
+  });
 });
 
 describe("nearby_words", () => {

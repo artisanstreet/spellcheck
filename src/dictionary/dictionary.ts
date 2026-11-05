@@ -115,12 +115,14 @@ export const dictionary_of = (sources: ReadonlyArray<Source>, frequencies: Reado
 const word_pattern = /^\p{L}+(?:'\p{L}+)*$/u;
 const capitalised = /^\p{Lu}/u;
 const inner_capital = /\p{Ll}\p{Lu}/u;
+const foreign_letter = /[^\p{ASCII}]/u;
 
 export const checkable = (word: string, sentence_start: boolean): boolean =>
   word_pattern.test(word) &&
   word.length > 2 &&
   word !== word.toUpperCase() &&
   !inner_capital.test(word) &&
+  !foreign_letter.test(word) &&
   (sentence_start || !capitalised.test(word));
 
 export const misspellings_of = (dictionary: Dictionary, tokens: ReadonlyArray<Token>): ReadonlyArray<Misspelling> =>
