@@ -3,6 +3,7 @@ import { Data, Effect, Option } from "effect";
 import type { Token } from "../evaluation/edits/tokens.ts";
 import { slang } from "./slang.ts";
 import { typo_cost } from "./typo.ts";
+import { web_words } from "./web-words.ts";
 
 export class DictionaryError extends Data.TaggedError("DictionaryError")<{ readonly cause: unknown }> {}
 
@@ -82,7 +83,7 @@ export const dictionary_of = (sources: ReadonlyArray<Source>, frequencies: Reado
       const proper = (word: string) => [word, word.slice(0, 1).toUpperCase() + word.slice(1)].find(correct);
       const lexicon = lexicon_of([...frequencies.keys()].slice(0, lexicon_size).flatMap((word) => Option.toArray(Option.fromNullishOr(proper(word)))));
       return new Dictionary({
-        known: (word) => slang.has(word.toLowerCase()) || correct(word) || correct(`${word}'t`),
+        known: (word) => slang.has(word.toLowerCase()) || web_words.has(word.toLowerCase()) || correct(word) || correct(`${word}'t`),
         suggest: (word) =>
           [...new Set([...nearby_words(lexicon, commonness, word).slice(0, candidate_limit), ...spellers.flatMap((speller) => speller.suggest(word))])].slice(
             0,
