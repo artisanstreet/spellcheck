@@ -3,7 +3,6 @@
   import { untrack } from "svelte";
   import { Settings } from "../../settings/settings.ts";
   import { Kind, type Issue } from "../../suggestions/issue.ts";
-  import IssueCount from "../../ui/issue-count.svelte";
   import SuggestionCard from "../../ui/suggestion-card.svelte";
   import { Checker, Result } from "./checker.ts";
   import { caret_of, rects_of, replace, surface_of } from "./editable.ts";
@@ -103,11 +102,6 @@
         style:width="{line.rect.width}px"
       ></span>
     {/each}
-    {#if visible.length > 0}
-      <span class="count" style:top="{box.value.bottom - 28}px" style:left="{box.value.right - 8}px">
-        <IssueCount issues={visible} />
-      </span>
-    {/if}
     {#each cards as card (card.issue)}
       <div
         class="card"
@@ -144,12 +138,6 @@
 
   .line.unsure {
     background: radial-gradient(circle at 1px 1px, var(--mark-ink) 1px, transparent 1.25px) 0 0 / 4px 2px repeat-x;
-  }
-
-  .count {
-    position: fixed;
-    display: flex;
-    transform: translateX(-100%);
   }
 
   .card {
