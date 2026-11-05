@@ -21,6 +21,8 @@ export class Misspelling extends Data.Class<{
 
 const candidate_limit = 6;
 const nearby_cost = 1.2;
+const completion_cost = 2;
+const short_word = 3;
 const lexicon_size = 60_000;
 
 export const frequencies_of = (text: string): ReadonlyMap<string, number> =>
@@ -51,14 +53,19 @@ export const lexicon_of = (words: ReadonlyArray<string>): Lexicon =>
     return lexicon.set(initial, [...(lexicon.get(initial) ?? []), word]);
   }, new Map<string, Array<string>>());
 
+const contains_in_order = (letters: string, word: string): boolean =>
+  Array.from(letters).reduce((position, letter) => (position < 0 ? position : word.indexOf(letter, position) + 1 || -1), 0) > 0;
+
 export const nearby_words = (lexicon: Lexicon, commonness: (word: string) => number, typed: string): ReadonlyArray<string> => {
   const lower = typed.toLowerCase();
+  const reachable = (word: string, cost: number) =>
+    cost <= nearby_cost || (cost <= completion_cost && (lower.length > short_word || contains_in_order(lower, word.toLowerCase())));
   const initials = new Set([lower[0], lower[1]].filter((letter) => letter !== undefined));
   return [...initials]
     .flatMap((letter) => lexicon.get(letter) ?? [])
     .filter((word) => Math.abs(word.length - lower.length) <= 2 && word.toLowerCase() !== lower)
     .map((word) => ({ word, cost: typo_cost(lower, word) }))
-    .filter((entry) => entry.cost <= nearby_cost)
+    .filter((entry) => reachable(entry.word, entry.cost))
     .map((entry) => ({ word: entry.word, score: entry.cost - 0.5 * commonness(entry.word) }))
     .toSorted((left, right) => left.score - right.score)
     .map((entry) => matching_case(typed, entry.word));

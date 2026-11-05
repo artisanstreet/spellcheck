@@ -25,6 +25,12 @@ describe("nearby_words", () => {
     expect(nearby_words(lexicon, commonness, "helo")[0]).toBe("hello");
   });
 
+  it("completes short words by adding letters but never swaps theirs", () => {
+    const short = lexicon_of(["hello", "hell", "gel", "he"]);
+    expect(nearby_words(short, () => 0.5, "hel")).toEqual(expect.arrayContaining(["hello", "hell"]));
+    expect(nearby_words(short, () => 0.5, "hel")).not.toContain("gel");
+  });
+
   it("keeps words whose proper form is capitalised", () => {
     expect(nearby_words(lexicon_of(["I've", "ice"]), () => 0.5, "Ive")).toContain("I've");
   });
