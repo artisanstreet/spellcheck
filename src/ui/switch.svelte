@@ -52,10 +52,8 @@
   }
 
   .switch[aria-checked="true"] .thumb {
-    --sand-top: oklch(0.92 0.035 88);
-    --sand-bottom: oklch(0.82 0.05 78);
-    background: linear-gradient(var(--sand-top), color-mix(in oklch, var(--sand-top), var(--sand-bottom)), var(--sand-bottom));
-    box-shadow: inset 0 1px 0 color-mix(in oklch, var(--sand-top), oklch(1 0 0) 30%), var(--shadow-press);
+    background: var(--sky-fill);
+    box-shadow: inset 0 0 0 1px var(--sky-edge), inset 0 2px 0 -1px var(--sky-highlight), var(--shadow-press);
     transform: translateX(1rem);
   }
 </style>

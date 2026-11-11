@@ -18,7 +18,7 @@
   <p class="message">{issue.message}</p>
   <div class="actions">
     {#each issue.replacements as replacement, index (replacement)}
-      <Button tone={index === 0 ? "sand" : "secondary"} onclick={() => accept(replacement)}>{replacement === "" ? "Remove" : replacement}</Button>
+      <Button tone={index === 0 ? "default" : "secondary"} onclick={() => accept(replacement)}>{replacement === "" ? "Remove" : replacement}</Button>
     {/each}
     {#if learn}
       <Button tone="secondary" onclick={learn}>Add to dictionary</Button>

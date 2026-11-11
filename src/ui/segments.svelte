@@ -64,13 +64,13 @@
   }
 
   .segments button[aria-checked="true"] {
-    --sand-top: oklch(0.92 0.035 88);
-    --sand-bottom: oklch(0.82 0.05 78);
-    color: oklch(0.27 0.025 70);
-    background:
-      radial-gradient(ellipse 70% 110% at 50% 115%, oklch(0.42 0.1 55 / 0.45), oklch(0.42 0.1 55 / 0) 70%),
-      linear-gradient(var(--sand-top), color-mix(in oklch, var(--sand-top), var(--sand-bottom)), var(--sand-bottom));
-    box-shadow: inset 0 1px 0 color-mix(in oklch, var(--sand-top), oklch(1 0 0) 30%), var(--shadow-press);
+    color: oklch(1 0 0);
+    text-shadow: 0 1px 4px oklch(0 0 0 / 0.4);
+    background: var(--sky-fill);
+    box-shadow:
+      inset 0 0 0 1px var(--sky-edge),
+      inset 0 2px 0 -1px var(--sky-highlight),
+      var(--shadow-press);
   }
 
   .segments button:focus-visible {

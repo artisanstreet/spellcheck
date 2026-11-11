@@ -28,7 +28,7 @@
   .well :global(button) {
     padding: 0;
     font: inherit;
-    color: oklch(0.88 0.045 82);
+    color: var(--sky-link);
     text-decoration: underline;
     text-underline-offset: 0.15em;
     background: none;
