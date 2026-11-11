@@ -11,7 +11,6 @@
   --sky-fill: radial-gradient(130% 140% at 50% 125%, #c6dbf0 0%, #6f9bcb 25%, #33599a 58%, #1d3270 92%);
   --sky-edge: #0b1640;
   --sky-highlight: rgb(220 236 255 / 0.28);
-  --sky-pressed-edge: #050a24;
   --sky-link: oklch(0.676 0.075 250.22);
   --mark-spelling: oklch(0.704 0.191 22.216);
   --mark-grammar: oklch(0.83 0.16 82);

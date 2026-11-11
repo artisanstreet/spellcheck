@@ -114,9 +114,10 @@
 
   .button[data-tone="default"]:active {
     transform: translateY(1.5px);
+    filter: brightness(0.93);
     box-shadow:
-      inset 0 2px 4px oklch(0 0 0 / 0.45),
-      0 0 0 1px var(--sky-pressed-edge);
+      inset 0 1px 3px rgb(4 9 32 / 0.55),
+      inset 0 -1px 0 rgb(220 236 255 / 0.12);
   }
 
   @media (prefers-reduced-motion: reduce) {
